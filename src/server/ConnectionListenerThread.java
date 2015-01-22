@@ -51,8 +51,10 @@ public class ConnectionListenerThread implements Runnable {
 					Thread thread = new Thread(cT);
 					thread.start();
 					
+					broadcast("SERVER", "User " + cT.getID() + " has connected");
+					
 					// Finally add the new thread to the saved list
-					connectedThreads.add(cT);
+               connectedThreads.add(cT);
 				
 				} catch (SocketTimeoutException e) {
 				}

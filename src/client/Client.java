@@ -34,6 +34,10 @@ public class Client {
 		// Set up a scanner for keyboard input
 		scanner = new Scanner(System.in);
 		
+		System.out.println("What is your username? ");
+		String username = scanner.nextLine();
+		System.out.println("Please wait, connecting....");
+		
 		// Writing to the server
 		PrintWriter output = null;
 		
@@ -48,6 +52,9 @@ public class Client {
 			
 			// This needs to be on for the socket reader to read at all
 			isSocketOpen = true;
+			
+			// Send the opening message with username
+			output.println(username);
 			
 			// Wait for the server to tell the client a connection has been made
 			String connectionMessage = input.readLine();

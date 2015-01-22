@@ -25,24 +25,24 @@ public class ClientThread implements Runnable {
 	Socket clientSocket;
 	final int mID;
 	final ConnectionListenerThread mBroadcaster;
+	String user = null;
 	
 	PrintWriter output = null;
 	
 	private boolean shouldDie = false;
 	
-	private boolean isAlive = true;
+	private boolean isAlive = false;
 	
 	public ClientThread(Socket socket, int id, ConnectionListenerThread broadcaster) {
 		clientSocket = socket;
 		mID = id;
 		mBroadcaster = broadcaster;
 		
-		Log.print("> New Client - " + mID);
+		Log.print("New Client - " + mID);
 	}
 	
 	protected void sendMessage(String msg) {
 		if (isAlive) {
-			//Log.print("Client thread (id " + mID + ") is sending a message to client");
 			output.write(1);
 			output.write(msg + END_OF_LINE);
 			output.flush();
@@ -70,6 +70,7 @@ public class ClientThread implements Runnable {
 		
 		output.write(-1);
 		clientSocket.close();
+		mBroadcaster.broadcast(user, "<DISCONNECTED>");
 	}
 	
 	@Override
@@ -80,9 +81,15 @@ public class ClientThread implements Runnable {
 			output = new PrintWriter(clientSocket.getOutputStream(), true);
 			BufferedReader input = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			
+			// Receive the client's username
+			user = input.readLine();
+			
 			// Tell the client that they've connected
 			output.println("You have connected at: " + new Date());
 			//doHandshake(input);
+			
+			// Finally this thread is ready to accept broadcasts or anything else
+			isAlive = true;
 			
 			// Loop that runs the functions
 			while (!shouldDie) {
@@ -92,13 +99,13 @@ public class ClientThread implements Runnable {
 					String chatInput = input.readLine();
 					
 					if (chatInput == null || chatInput.equals("CLOSE_SOCKET")) {
-						System.out.println("Client requested close");
+						Log.print("Client " + mID + " requested close");
 						shouldDie = true;
 						closeSocket();
 						break;
 					}
 					
-					mBroadcaster.broadcast("User " + mID, chatInput);
+					mBroadcaster.broadcast(user, chatInput);
 					
 					output.write(0);
 					output.flush();
