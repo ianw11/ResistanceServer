@@ -107,7 +107,12 @@ public class ClientThread implements Runnable {
 						break;
 					}
 					
-					mBroadcaster.broadcastToOthers(user, chatInput, mID);
+					if (chatInput.startsWith("\\")) {
+					   sendMessage("Sending this message to just you");
+					}
+					else {
+					   mBroadcaster.broadcastToOthers(user, chatInput, mID);
+					}
 					
 					output.write(0);
 					output.flush();

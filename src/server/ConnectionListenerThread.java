@@ -29,6 +29,13 @@ public class ConnectionListenerThread implements Runnable {
 	   }
 	}
 	
+	protected void broadcastToSingle(String user, String msg, int id) {
+	   for (ClientThread ct : connectedThreads) {
+         if (ct.getID() == id)
+            ct.sendMessage(user + "> " + msg);
+      }
+	}
+	
 	@Override
 	public void run() {
 	   
