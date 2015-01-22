@@ -18,8 +18,15 @@ public class ConnectionListenerThread implements Runnable {
 	
 	protected void broadcast(String user, String msg) {
 		for (ClientThread ct : connectedThreads) {
-			ct.sendMessage(user + " > " + msg);
+			ct.sendMessage(user + "> " + msg);
 		}
+	}
+	
+	protected void broadcastToOthers(String user, String msg, int id) {
+	   for (ClientThread ct : connectedThreads) {
+	      if (ct.getID() != id)
+	         ct.sendMessage(user + "> " + msg);
+	   }
 	}
 	
 	@Override
@@ -50,8 +57,6 @@ public class ConnectionListenerThread implements Runnable {
 					// Start the thread
 					Thread thread = new Thread(cT);
 					thread.start();
-					
-					broadcast("SERVER", "User " + cT.getID() + " has connected");
 					
 					// Finally add the new thread to the saved list
                connectedThreads.add(cT);

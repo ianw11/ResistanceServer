@@ -79,6 +79,8 @@ public class Client {
 					
 					if (keyboardInput.equals("CLOSE_SOCKET"))
 					   System.err.println("Illegal message");
+					else if (keyboardInput.length() > 1024)
+					   System.err.println("Message too long. Max 1024 chars");
 					else
 					   // Send the text
 					   output.println(keyboardInput);

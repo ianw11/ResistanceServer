@@ -70,7 +70,7 @@ public class ClientThread implements Runnable {
 		
 		output.write(-1);
 		clientSocket.close();
-		mBroadcaster.broadcast(user, "<DISCONNECTED>");
+		mBroadcaster.broadcastToOthers(user, "<DISCONNECTED>", mID);
 	}
 	
 	@Override
@@ -91,6 +91,8 @@ public class ClientThread implements Runnable {
 			// Finally this thread is ready to accept broadcasts or anything else
 			isAlive = true;
 			
+			mBroadcaster.broadcastToOthers(user, "<CONNECTED>", mID);
+			
 			// Loop that runs the functions
 			while (!shouldDie) {
 				
@@ -105,12 +107,12 @@ public class ClientThread implements Runnable {
 						break;
 					}
 					
-					mBroadcaster.broadcast(user, chatInput);
+					mBroadcaster.broadcastToOthers(user, chatInput, mID);
 					
 					output.write(0);
 					output.flush();
 					
-					System.out.println(mID + " >> " + chatInput);
+					System.out.println(user + " >> " + chatInput);
 					
 					
 				} catch (SocketException e) { }
