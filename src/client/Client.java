@@ -17,8 +17,11 @@ public class Client {
 	private boolean isSocketOpen = false;
 
 	public static void main(String[] args) {
-        	if (args.length != 1)
-			System.out.println("Usage: java Client <server>");
+	   if (args.length != 1) {
+	      System.out.println("Usage: java Client <server>");
+        	System.out.println("Defaulting to localhost");
+        	new Client("localhost");
+      }
 		else
 			new Client(args[0]);
 	}
@@ -67,8 +70,11 @@ public class Client {
 						break;
 					}
 					
-					// Send the text
-					output.println(keyboardInput);
+					if (keyboardInput.equals("CLOSE_SOCKET"))
+					   System.err.println("Illegal message");
+					else
+					   // Send the text
+					   output.println(keyboardInput);
 				}
 			}
 			
@@ -117,11 +123,11 @@ public class Client {
 				while (isSocketOpen) {
 					int event = input.read();
 					
-					System.out.println("Event: " + event);
+					//System.out.println("Event: " + event);
 					
 					if (event == 1) {
 						int numRead = input.read(buffer, 0, 1024);
-						System.out.println("BROADCAST: " + numRead);
+						//System.out.println("BROADCAST: " + numRead);
 
 						for (int i = 0; i < numRead; ++i)
 							System.out.print(buffer[i]);

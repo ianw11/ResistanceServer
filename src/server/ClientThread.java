@@ -17,13 +17,14 @@ import utilities.Log;
 public class ClientThread implements Runnable {
 	
 	public static void main(String[] args) {
-		System.out.println(new ClientThread(null, -1).keyHandshake("dGhlIHNhbXBsZSBub25jZQ=="));
+		System.out.println(new ClientThread(null, -1, null).keyHandshake("dGhlIHNhbXBsZSBub25jZQ=="));
 	}
 	
 	private static final String END_OF_LINE = "\r\n";
 
 	Socket clientSocket;
 	final int mID;
+	final ConnectionListenerThread mBroadcaster;
 	
 	PrintWriter output = null;
 	
@@ -31,16 +32,17 @@ public class ClientThread implements Runnable {
 	
 	private boolean isAlive = true;
 	
-	public ClientThread(Socket socket, int id) {
+	public ClientThread(Socket socket, int id, ConnectionListenerThread broadcaster) {
 		clientSocket = socket;
 		mID = id;
+		mBroadcaster = broadcaster;
 		
-		System.out.println("> New Client - " + mID);
+		Log.print("> New Client - " + mID);
 	}
 	
 	protected void sendMessage(String msg) {
 		if (isAlive) {
-			Log.print("Client id " + mID + " is sending a message");
+			//Log.print("Client thread (id " + mID + ") is sending a message to client");
 			output.write(1);
 			output.write(msg + END_OF_LINE);
 			output.flush();
@@ -95,6 +97,8 @@ public class ClientThread implements Runnable {
 						closeSocket();
 						break;
 					}
+					
+					mBroadcaster.broadcast("User " + mID, chatInput);
 					
 					output.write(0);
 					output.flush();

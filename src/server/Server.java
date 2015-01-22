@@ -6,13 +6,11 @@ import utilities.Log;
 
 public class Server {
 	
-	private boolean killServer = false;
-	
 	public static void main(String[] args) {
-		new Server();
+		new Server().go();
 	}
 	
-	public Server() {
+	private void go() {
 		
 		// Set up the listener for new connections
 		ConnectionListenerThread connectionListener = new ConnectionListenerThread();
@@ -59,13 +57,14 @@ public class Server {
 		
 		@Override
 		public void run() {
+		   
+		   boolean killServer = false;
 			
 			Scanner scanner = new Scanner(System.in);
 			
 			Log.print("Initialized.  Enter 'help' to see commands");
 			
 			while (!killServer) {
-				System.out.print("$ ");
 				String input = scanner.nextLine();
 				if (input.equals("quit"))
 					killServer = true;
@@ -78,13 +77,13 @@ public class Server {
 						}
 						
 						Log.print("Broadcasting: " + message.toString());
-						clt.broadcast(message.toString());
+						clt.broadcast("SERVER", message.toString());
 					}
 					else if (split[0].equals("help")) {
-						Log.print("'quit' to quit\n'b' to broadcast\n'show' to show connections\n'help' to open this dialog");
+						Log.print("'quit' to quit\n'b <...>' to broadcast\n'show' to show connections\n'help' to open this dialog");
 					}
 					else if (split[0].equals("show")) {
-						Log.print("TODO SHow connected users");
+						Log.print("TODO Show connected users");
 					}
 					else if (split[0].equals("kick")) {
 					   Log.print("TODO Kick users");
