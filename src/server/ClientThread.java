@@ -80,7 +80,6 @@ public class ClientThread implements Runnable {
 			
 			// Tell the client that they've connected
 			output.println("You have connected at: " + new Date());
-			
 			//doHandshake(input);
 			
 			// Loop that runs the functions
@@ -92,6 +91,7 @@ public class ClientThread implements Runnable {
 					
 					if (chatInput == null || chatInput.equals("CLOSE_SOCKET")) {
 						System.out.println("Client requested close");
+						shouldDie = true;
 						closeSocket();
 						break;
 					}

@@ -86,6 +86,9 @@ public class Server {
 					else if (split[0].equals("show")) {
 						Log.print("TODO SHow connected users");
 					}
+					else if (split[0].equals("kick")) {
+					   Log.print("TODO Kick users");
+					}
 				}
 			}
 			
