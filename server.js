@@ -97,6 +97,7 @@ io.on('connection', function(socket) {
       
       if (game.getNumUsers() < 5 || game.getNumUsers() > 10) {
          socket.emit('violation', "There must be between 5 and 10 people");
+         return;
       }
       
       role_list = game.newGame();
