@@ -1,0 +1,251 @@
+var socket = io();
+
+var users = {};
+var visibleElem = null;
+
+var thisUser = null;
+var thisRole = null;
+var thisTeammates = null;
+
+var onMission = false;
+
+var isLeader = false;
+
+window.onload = function() {
+   visibleElem = $('#index');
+   
+   $('#startGameButton')[0].onclick = startGame;
+   $('#selectTeamButton')[0].onclick = selectTeam;
+   
+   $('#team_vote_yes')[0].onclick = voteTeamYes;
+   $('#team_vote_no')[0].onclick = voteTeamNo;
+   
+   $('#mission_vote_pass')[0].onclick = voteMissionPass;
+   $('#mission_vote_fail')[0].onclick = voteMissionFail;
+   
+   //var toHide = $('.myhidden');
+   $('.myhidden').each(function(index) {
+      $(this).toggle(0);
+   });
+};
+
+/* When the user submits their name */
+$('#nameInputForm').submit(function() {
+   var name = $('#nameInput').val();
+   socket.emit('add_name', name);
+   thisUser = name;
+   return false;
+});
+
+/* When the server has accepted the user */
+socket.on('accepted_user', function() {
+   swapVisibility($('#queue_screen'));
+   setHeaderText("Welcome to the game!");
+});
+
+/* When a new user enters the game. */
+socket.on('new_user', function(name) {
+   var queue = $('#queue');
+   var li = document.createElement('li');
+   users[name] = li;
+   li.innerHTML = name;
+   queue.append(li);
+});
+
+/* When somebody's connection drops */
+socket.on('dropped_user', function(name) {
+   var queue = $('#queue');
+   users[name].parentNode.removeChild(users[name]);
+});
+
+
+/* When the server informs the clients that the game has started */
+socket.on('game_started', function() {
+   console.log('Received the ok');
+   socket.emit('send_role', thisUser);
+});
+
+/* When the server informs this client what role it is */
+socket.on('role', function(role, teammates) {
+   var h1 = $('#roleElem')[0];
+   h1.innerHTML = role;
+   thisRole = role;
+   
+   if (role === 'SPY') {
+      thisTeammates = teammates;
+      var mates = $('#teammates');
+      for (var i = 0; i < teammates.length; ++i) {
+         var li = document.createElement('li');
+         li.innerHTML = teammates[i];
+         mates.append(li);
+      }
+   }
+});
+
+/* If this client is the leader, this is triggered */
+socket.on('leader', function(userList, numberOfAgents) {
+   isLeader = true;
+   
+   var multiSelect = $('#leader_select');
+   $('#leaderInfo').toggle(0);
+   
+   userList.forEach(function(currentValue, index, array) {
+      var opt = document.createElement('option');
+      opt.value = currentValue;
+      opt.innerHTML = currentValue;
+      multiSelect.append(opt);
+   });
+   
+   // Turn it into a multiselect
+   multiSelect.multiSelect();
+   
+   $('#neededNumberOfPeople')[0].innerHTML = "Need: " + numberOfAgents + " agent(s)";
+});
+
+/* When the server informs everybody who the leader is */
+socket.on('curr_leader', function(leader, roundNum, voteNum) {
+   swapVisibility($('#role_screen'));
+   $('#currLeader')[0].innerHTML = "Current Leader: " + leader;
+   $('#roundAndVote')[0].innerHTML = "Round Number: " + roundNum + " and vote number: " + voteNum;
+});
+
+/* When the server asks each user to vote */
+socket.on('vote_team', function(team) {
+   swapVisibility($('#voteOnTeam'));
+   team.forEach(function(value, index) {
+      var li = document.createElement('li');
+      li.innerHTML = value;
+      $('#team_list').append(li);
+   });
+});
+
+/* When the vote has gone through */
+socket.on('team_vote_result', function(res, team, role) {
+   isLeader = false;
+   if (res) {
+      setHeaderText('Vote passed');
+      onMission = false;
+      
+      team.forEach(function(value, index) {
+         if (value === thisUser)
+            onMission = true;
+      });
+      
+      swapVisibility($('#mission'));
+      
+      if (onMission) {
+            //console.log("I'm on a mission! || " + role[thisUser]);
+            $('#on_mission').toggle(0);
+            if (thisRole === 'SPY')
+               $('#mission_vote_fail').toggle(0);
+               
+         } else {
+            //console.log("I'm not on a mission || " + role[thisUser]);
+         }
+      
+   } else {
+      setHeaderText('Vote failed');
+   }
+});
+
+
+socket.on('mission_result', function(res) {
+   setHeaderText((res === false ? 'Spy' : 'Resistance') + " wins mission");
+});
+
+
+socket.on('victory', function(side) {
+   if (side === 0)
+      setHeaderText("SPIES WIN");
+   else
+      setHeaderText("RESISTANCE WINS");
+   
+   swapVisibility($('#emptyDiv'));
+});
+
+
+/* Any error. Bumps the user back to the main page */
+socket.on('_error', function(msg) {
+   alert(msg);
+   swapVisibility($('#index'));
+});
+
+socket.on('violation', function(msg) {
+   alert(msg);
+   if (isLeader) {
+      $('#leaderInfo').toggle(0);
+   }
+});
+
+
+/* Helper functions */
+
+/* Handler for the startGameButton */
+var startGame = function() {
+   socket.emit('start_game');
+};
+
+/* Helper function to switch out visibility */
+var swapVisibility = function(newElem) {
+   visibleElem.toggle(0);
+   newElem.toggle(0);
+   visibleElem = newElem;
+};
+
+/* Handler for the team selection */
+var selectTeam = function() {
+   var selected = [];
+   var i = 0;
+   $('.ms-selection .ms-list .ms-selected').each(function(index) {
+      selected[i++] = $(this)[0].getElementsByTagName('span')[0].innerHTML;
+   });
+   
+   socket.emit('team_list', selected);
+   
+   $('#leaderInfo').toggle(0);
+};
+
+var voteTeam = function() {
+   while ($('#team_list')[0].firstChild) {
+      $('#team_list')[0].removeChild($('#team_list')[0].firstChild);
+   }
+   
+   swapVisibility($('#emptyDiv'));
+   
+   setHeaderText("Vote Sent");
+};
+
+var voteTeamYes = function() {
+   voteTeam();
+   socket.emit('vote', 1);
+};
+
+var voteTeamNo = function() {
+   voteTeam();
+   socket.emit('vote', 0);
+};
+
+var voteMission = function() {
+   if (thisRole === 'SPY') {
+      $('#mission_vote_fail').toggle(0);
+   }
+   
+   $('#on_mission').toggle(0);
+   
+   swapVisibility($('#emptyDiv'));
+   
+};
+
+var voteMissionPass = function() {
+   voteMission();
+   socket.emit('mission', 1);
+};
+
+var voteMissionFail = function() {
+   voteMission();
+   socket.emit('mission', 0);
+};
+
+var setHeaderText = function(txt) {
+   $('#status')[0].innerHTML = txt;
+};
