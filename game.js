@@ -1,6 +1,7 @@
 module.exports = {
 
    Game: function() {
+      /* userList holds all the names of people playing */
       var userList = [];
       var roles = {};
       var spies = [];
@@ -16,6 +17,7 @@ module.exports = {
       var voteYesCount = 0;
       var playersVoted = 0;
       
+      /* leader is the index of the player who is the round leader */
       var leader;
       
       var missionVoted = 0;
@@ -30,6 +32,11 @@ module.exports = {
          
          userList = shuffle(userList);
          
+         /* This loop walks through the user list and assigns a
+            role to each player.
+            The spies also get added to a spy array, so they
+            can know who each other is
+         */
          var i = 0;
          switch(userList.length) {
          case 5:
@@ -206,6 +213,12 @@ module.exports = {
       this.missionResult = function() {
          missionVoted = 0;
          
+         if (missionPassed) {
+            ++numResistanceWins;
+         } else {
+            ++numSpyWins;
+         }
+         
          var res = missionPassed;
          missionPassed = true;
          return res;
@@ -253,6 +266,14 @@ module.exports = {
       this.getVoteNumber = function() {
          return voteCount;
       };
+      
+      this.getNumSpyWins = function() {
+         return numSpyWins;
+      }
+      
+      this.getNumResistanceWins = function() {
+         return numResistanceWins;
+      }
       
       this.getWinner = function() {
          if (numSpyWins === 3)

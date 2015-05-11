@@ -41,6 +41,8 @@ $('#nameInputForm').submit(function() {
 socket.on('accepted_user', function() {
    swapVisibility($('#queue_screen'));
    setHeaderText("Welcome to the game!");
+   
+   updateScoreBar();
 });
 
 /* When a new user enters the game. */
@@ -105,8 +107,10 @@ socket.on('leader', function(userList, numberOfAgents) {
 /* When the server informs everybody who the leader is */
 socket.on('curr_leader', function(leader, roundNum, voteNum) {
    swapVisibility($('#role_screen'));
-   $('#currLeader')[0].innerHTML = "Current Leader: " + leader;
+   $('#currLeader')[0].innerHTML = "Current Captain: " + leader;
    $('#roundAndVote')[0].innerHTML = "Round Number: " + roundNum + " and vote number: " + voteNum;
+   
+   //updateScoreBar();
 });
 
 /* When the server asks each user to vote */
@@ -164,6 +168,10 @@ socket.on('victory', function(side) {
 });
 
 
+socket.on('updated_scores', function(resistance, spies) {
+   $('#scoreBar')[0].innerHTML = "Resistance: " + resistance + " Spies: " + spies;
+});
+
 /* Any error. Bumps the user back to the main page */
 socket.on('_error', function(msg) {
    alert(msg);
@@ -191,6 +199,11 @@ var swapVisibility = function(newElem) {
    newElem.toggle(0);
    visibleElem = newElem;
 };
+
+/* Helper function to update scores */
+var updateScoreBar = function() {
+   socket.emit('update_scores')
+}
 
 /* Handler for the team selection */
 var selectTeam = function() {
@@ -246,6 +259,8 @@ var voteMissionFail = function() {
    socket.emit('mission', 0);
 };
 
+
+// Function to update the header text
 var setHeaderText = function(txt) {
    $('#status')[0].innerHTML = txt;
 };

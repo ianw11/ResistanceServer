@@ -1,4 +1,5 @@
 var _game = require('./game');
+var _ai = require('./ai');
 
 /* Here are the 'node' require statements */
 // Express initializes app to be a function handler
@@ -15,6 +16,10 @@ var user_list = null;
 var role_list = null;
 
 var team_list = null;
+
+var REQUIRE_FIVE = false;
+
+var ai_list = [];
 
 
 // We define a route handler '/' that gets called when we hit the website home
@@ -67,6 +72,10 @@ io.on('connection', function(socket) {
       user_list[name] = socket;
       
       game.addUser(name);
+      
+      // AI STUFF
+      var myAI = new _ai.AI(game);
+      myAI.printRound();
    });
    
    // disconnect
@@ -95,7 +104,7 @@ io.on('connection', function(socket) {
          return;
       }
       
-      if (game.getNumUsers() < 5 || game.getNumUsers() > 10) {
+      if (REQUIRE_FIVE && (game.getNumUsers() < 5 || game.getNumUsers() > 10)) {
          socket.emit('violation', "There must be between 5 and 10 people");
          return;
       }
@@ -148,13 +157,15 @@ io.on('connection', function(socket) {
    // mission
    socket.on('mission', function(res) {
       if (game.mission(res)) {
+         var result = game.missionResult();
+         
          var winningTeam = game.getWinner();
          if (winningTeam !== -1) {
             io.emit('victory', winningTeam);
             return;
          }
          
-         var result = game.missionResult();
+         
          io.emit('mission_result', result);
          
          socket.advanceRound();
@@ -180,10 +191,18 @@ io.on('connection', function(socket) {
       var leader = game.getRoundLeader();
       user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
       io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
+      
+      io.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
    };
    
+   
+   // To update the client's scores
+   socket.on('update_scores', function() {
+      socket.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
+   });
+   
+   
 });
-
 
 
 
