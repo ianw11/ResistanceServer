@@ -1,6 +1,6 @@
 module.exports = {
    AI: function(id, game, messenger) {
-      var io = require('./lib/socket.io-client');
+      var io = require('socket.io-client');
       var socket = io.connect();
       
       
