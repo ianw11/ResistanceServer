@@ -18,6 +18,8 @@ module.exports = {
       this.roundNum = -1;
       this.voteNum = -1;
       
+      this.teammates = null;
+      
       
       
       /* When the game starts, each AI must request its role */
@@ -29,6 +31,8 @@ module.exports = {
       
       socket.on('role', function(role, spies) {
          self.role = role;
+         if (role === 'SPY')
+            self.teammates = spies;
       });
       
       socket.on('leader', function(userList, numberOfAgents) {
