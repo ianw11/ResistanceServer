@@ -14,6 +14,8 @@ var isLeader = false;
 window.onload = function() {
    visibleElem = $('#index');
    
+   $('#addAIButton')[0].onclick = addAI;
+   
    $('#startGameButton')[0].onclick = startGame;
    $('#selectTeamButton')[0].onclick = selectTeam;
    
@@ -168,6 +170,7 @@ socket.on('victory', function(side) {
    setHeaderText(text);
    
    swapVisibility($('#emptyDiv'));
+   swapVisibility($('#scoreBar'));
 });
 
 
@@ -191,10 +194,13 @@ socket.on('violation', function(msg) {
 
 /* Helper functions */
 
+var addAI = function() {
+   socket.emit('add_ai');
+};
+
 /* Handler for the startGameButton */
 var startGame = function() {
-   var numAI = $('#selectNumAI')[0].value;
-   socket.emit('start_game', numAI);
+   socket.emit('start_game');
 };
 
 /* Helper function to switch out visibility */
@@ -222,7 +228,10 @@ var selectTeam = function() {
    $('#leaderInfo').toggle(0);
 };
 
+
+/* Functions for choosing a team to go on a mission */
 var voteTeam = function() {
+   // Remove all lines from #team_list
    while ($('#team_list')[0].firstChild) {
       $('#team_list')[0].removeChild($('#team_list')[0].firstChild);
    }
@@ -242,6 +251,7 @@ var voteTeamNo = function() {
    socket.emit('vote', 0);
 };
 
+/* Functions for running a mission */
 var voteMission = function() {
    if (thisRole === 'SPY') {
       $('#mission_vote_fail').toggle(0);

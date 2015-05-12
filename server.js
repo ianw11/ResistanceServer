@@ -24,48 +24,7 @@ var REQUIRE_FIVE = false;
 var connected_ai = [];
 
 var add_ai = function() {
-   connected_ai[connected_ai.length] = new _ai.AI(connected_ai.length, game, ai_msg);
-};
-
-var broadcast0 = function(msg) {
-   io.emit(msg);
-   connected_ai.forEach(function(val, ndx, arr) {
-      val.inbound(msg);
-   });
-};
-var broadcast1 = function(msg, arg1) {
-   io.emit(msg, arg1);
-   connected_ai.forEach(function(val, ndx, arr) {
-      val.inbound(msg, arg1);
-   });
-};
-var broadcast2 = function(msg, arg1, arg2) {
-   io.emit(msg, arg1, arg2);
-   connected_ai.forEach(function(val, ndx, arr) {
-      val.inbound(msg, arg1, arg2);
-   });
-};
-var broadcast3 = function(msg, arg1, arg2, arg3) {
-   io.emit(msg, arg1, arg2, arg3);
-   connected_ai.forEach(function(val, ndx, arr) {
-      val.inbound(msg, arg1, arg2, arg3);
-   });
-};
-
-// Messages come from AI in the form of:
-// arguments[0] - id of AI
-// arguments[1] - list of arguments
-var ai_msg = function() {
-   var ai_id = arguments[0];
-   var args = arguments[1];
-   switch (args[0]) {
-      case 'connection':
-         console.log('ai ' + ai_id + ' connection established');
-         break;
-      default:
-         console.log('Error: ai_msg received unknown message from ' + ai_id);
-         break;
-   }
+   connected_ai[connected_ai.length] = new _ai.AI(connected_ai.length, game);
 };
 
 
@@ -82,11 +41,6 @@ app.get('/client.js', function(req, res) {
    res.sendFile(__dirname + '/client.js');
 });
 
-// As of 1.3.5, we are keeping socket.io locally
-app.get('/socket.js', function(req, res) {
-   res.sendFile(__dirname + '/lib/socket.io-1.3.5.js');
-});
-
 /* MultiSelect code */
 app.get('/multi_select', function (req, res) {
    res.sendFile(__dirname + '/multi_select/css/multi-select.css');
@@ -99,6 +53,7 @@ app.get('/img/switch.png', function(req, res) {
 });
 
 io.on('connection', function(socket) {
+   console.log('connection established');
    
    // connect
    socket.on('add_name', function(name) {
@@ -133,7 +88,7 @@ io.on('connection', function(socket) {
          socket.emit('new_user', users[i].name);
       }
       // Send the new user to all users
-      broadcast1('new_user', name);
+      io.emit('new_user', name);
       
       // Tie the socket to the user
       socket['username'] = name;
@@ -141,6 +96,8 @@ io.on('connection', function(socket) {
       
       game.addUser(name);
    });
+   
+   socket.on('add_ai', add_ai);
    
    // disconnect
    socket.on('disconnect', function() {
@@ -152,11 +109,11 @@ io.on('connection', function(socket) {
       
       game.dropUser(socket['username']);
       console.log(socket['username'] + " has disconnected");
-      broadcast1('dropped_user', socket['username']);
+      io.emit('dropped_user', socket['username']);
       
       // Decrement connectedUsers and if 0, drop the game instance
       connectedUsers--;
-      if (connectedUsers == 0 && game != null) {
+      if (connectedUsers == connected_ai.length && game != null) {
          console.log("No more users, closing game");
          game = null;
          //user_list = null;
@@ -165,17 +122,11 @@ io.on('connection', function(socket) {
    });
 
    // start_game
-   socket.on('start_game', function(numAI) {
+   socket.on('start_game', function() {
       if (game.isGameStarted()) {
          return;
       }
       
-      console.log('Number of AI to create: ' + numAI);
-      // Add code to add AI units
-      for (var i = 0; i < numAI; ++i) {
-         add_ai();
-      }
-      // game.addUser(ai);
       
       if (REQUIRE_FIVE && (game.getNumUsers() < 5 || game.getNumUsers() > 10)) {
          socket.emit('violation', "There must be between 5 and 10 people");
@@ -184,7 +135,7 @@ io.on('connection', function(socket) {
       
       //role_list = game.newGame();
       game.newGame();
-      broadcast0('game_started');
+      io.emit('game_started');
       
       socket.advanceRound();
    });
@@ -204,7 +155,7 @@ io.on('connection', function(socket) {
    // team_list (submitting the mission team list)
    socket.on('team_list', function(team) {
       if (game.correctNumberOnTeam(team.length)) {
-         broadcast1('vote_team', team);
+         io.emit('vote_team', team);
          team_list = team;
       } else {
          socket.emit('violation', "Wrong number of people on team");
@@ -218,7 +169,7 @@ io.on('connection', function(socket) {
          
          // If everybody has voted, move on to the result analysis
          var result = game.getVoteResult();
-         broadcast2('team_vote_result', result, team_list);
+         io.emit('team_vote_result', result, team_list);
          if (result) {
          } else {
             socket.advanceVote();
@@ -236,11 +187,11 @@ io.on('connection', function(socket) {
          
          var winningTeam = game.getWinner();
          if (winningTeam !== -1) {
-            broadcast1('victory', winningTeam);
+            io.emit('victory', winningTeam);
             return;
          }
          
-         broadcast1('mission_result', result);
+         io.emit('mission_result', result);
          
          socket.advanceRound();
       }
@@ -250,12 +201,12 @@ io.on('connection', function(socket) {
    socket.advanceVote = function() {
       if (game.nextVote()) {
          // If the number of votes has exceeded 5
-         broadcast1('victory', 0);
+         io.emit('victory', 0);
          return;
       }
       var leader = game.getRoundLeader();
       user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
-      broadcast3('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
+      io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
    };
    
    socket.advanceRound = function() {
@@ -263,6 +214,7 @@ io.on('connection', function(socket) {
          io.emit('victory', game.getWinner());
          return;
       }
+      
       var leader = game.getRoundLeader();
       user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
       io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
