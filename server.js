@@ -116,7 +116,6 @@ io.on('connection', function(socket) {
       if (connectedUsers == connected_ai.length && game != null) {
          console.log("No more users, closing game");
          game = null;
-         //user_list = null;
          team_list = null;
       }
    });
@@ -135,6 +134,7 @@ io.on('connection', function(socket) {
       
       //role_list = game.newGame();
       game.newGame();
+      
       io.emit('game_started');
       
       socket.advanceRound();
@@ -144,7 +144,7 @@ io.on('connection', function(socket) {
    // send_role
    socket.on('send_role', function(name) {
       var role = game.getRole(name);
-      
+      console.log(name + " has role: " + role);
       if (role === 'SPY') {
          socket.emit('role', role, game.getSpies());
       } else {

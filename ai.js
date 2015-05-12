@@ -21,16 +21,24 @@ module.exports = {
       this.teammates = null;
       
       
+      socket.on('accepted_user', function() {
+         // Expected
+      });
+      socket.on('new_user', function(name) {
+         // The AI doesn't care about new users
+      });
+      socket.on('dropped_user', function(name) {
+         // The AI doesn't care about dropped users
+      });
       
       /* When the game starts, each AI must request its role */
-      socket.on('game_started', this.acceptGameStart);
-      this.acceptGameStart = function() {
-         console.log("AI id " + self.id + " recognizes the game has started");
-         socket.emit('send_role');
-      };
+      socket.on('game_started', function() {
+         socket.emit('send_role', NAME);
+      });
       
       socket.on('role', function(role, spies) {
          self.role = role;
+         console.log(NAME + " has role " + self.role);
          if (role === 'SPY')
             self.teammates = spies;
       });

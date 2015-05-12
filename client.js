@@ -66,12 +66,12 @@ socket.on('dropped_user', function(name) {
 
 /* When the server informs the clients that the game has started */
 socket.on('game_started', function() {
-   console.log('Received the ok');
    socket.emit('send_role', thisUser);
 });
 
 /* When the server informs this client what role it is */
 socket.on('role', function(role, teammates) {
+   console.log("Got role: " + role);
    var h1 = $('#roleElem')[0];
    h1.innerHTML = role;
    thisRole = role;

@@ -276,11 +276,17 @@ module.exports = {
       };
 
       this.getRole = function(name) {
+         var res = "";
+         
          userList.forEach(function(val, ndx) {
             if (val.name === name) {
-               return val.role;
+               res = val.role;
             }
          });
+         
+         console.log(name + ' will be given: ' + res);
+         
+         return res;
       }
       
       /*
