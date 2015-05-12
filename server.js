@@ -5,21 +5,71 @@ var _ai = require('./ai');
 // Express initializes app to be a function handler
 // that you can supply to an HTTP server
 var app = require('express')();
-// app is being supplied to an http server here.
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+
 
 var game = null;
 var connectedUsers = 0;
 
+// user_list is an object with key-value pairs
+// in the form of <username>:<socket>
 var user_list = null;
-var role_list = null;
 
 var team_list = null;
 
 var REQUIRE_FIVE = false;
 
-var ai_list = [];
+/* Code to allow AI to take part in the game too */
+var connected_ai = [];
+
+var add_ai = function() {
+   connected_ai[connected_ai.length] = new _ai.AI(connected_ai.length, game, ai_msg);
+};
+
+var broadcast0 = function(msg) {
+   io.emit(msg);
+   connected_ai.forEach(function(val, ndx, arr) {
+      val.inbound(msg);
+   });
+};
+var broadcast1 = function(msg, arg1) {
+   io.emit(msg, arg1);
+   connected_ai.forEach(function(val, ndx, arr) {
+      val.inbound(msg, arg1);
+   });
+};
+var broadcast2 = function(msg, arg1, arg2) {
+   io.emit(msg, arg1, arg2);
+   connected_ai.forEach(function(val, ndx, arr) {
+      val.inbound(msg, arg1, arg2);
+   });
+};
+var broadcast3 = function(msg, arg1, arg2, arg3) {
+   io.emit(msg, arg1, arg2, arg3);
+   connected_ai.forEach(function(val, ndx, arr) {
+      val.inbound(msg, arg1, arg2, arg3);
+   });
+};
+
+// Messages come from AI in the form of:
+// arguments[0] - id of AI
+// arguments[1] - list of arguments
+var ai_msg = function() {
+   var ai_id = arguments[0];
+   var args = arguments[1];
+   switch (args[0]) {
+      case 'connection':
+         console.log('ai ' + ai_id + ' connection established');
+         break;
+      default:
+         console.log('Error: ai_msg received unknown message from ' + ai_id);
+         break;
+   }
+};
+
+
+/* END OF AI SECTION */
 
 
 // We define a route handler '/' that gets called when we hit the website home
@@ -30,6 +80,11 @@ app.get('/', function(req, res) {
 // Send the client javascript code too!
 app.get('/client.js', function(req, res) {
    res.sendFile(__dirname + '/client.js');
+});
+
+// As of 1.3.5, we are keeping socket.io locally
+app.get('/socket.js', function(req, res) {
+   res.sendFile(__dirname + '/lib/socket.io-1.3.5.js');
 });
 
 /* MultiSelect code */
@@ -47,70 +102,89 @@ io.on('connection', function(socket) {
    
    // connect
    socket.on('add_name', function(name) {
+      
+      // If no game object exists, create a new one
+      // Also resets user_list
       if (game == null) {
          console.log("Creating new game");
          game = new _game.Game();
          user_list = {};
       }
       
+      // If the game has already started, don't allow
+      // the user to connect.
+      // This can be replaced later on by allowing multiple
+      // instances of games at one time
       if (game.isGameStarted()) {
          socket.emit('_error', "Game has already started");
          return;
       }
       
+      
+      // Increment the connected users
       connectedUsers++;
+      
       
       socket.emit('accepted_user');
       
       var users = game.getUsers();
       for (var i = 0; i < users.length; ++i) {
-         socket.emit('new_user', users[i]);
+         // Send all users to the new connection
+         socket.emit('new_user', users[i].name);
       }
-      io.emit('new_user', name);
+      // Send the new user to all users
+      broadcast1('new_user', name);
       
+      // Tie the socket to the user
       socket['username'] = name;
       user_list[name] = socket;
       
       game.addUser(name);
-      
-      // AI STUFF
-      var myAI = new _ai.AI(game);
-      myAI.printRound();
    });
    
    // disconnect
    socket.on('disconnect', function() {
+      
+      // If the user never actually entered their name, just exit this function
       if (socket['username'] == null) {
          return;
       }
       
       game.dropUser(socket['username']);
       console.log(socket['username'] + " has disconnected");
-      io.emit('dropped_user', socket['username']);
+      broadcast1('dropped_user', socket['username']);
       
+      // Decrement connectedUsers and if 0, drop the game instance
       connectedUsers--;
       if (connectedUsers == 0 && game != null) {
          console.log("No more users, closing game");
          game = null;
-         role_list = null;
-         user_list = null;
+         //user_list = null;
          team_list = null;
       }
    });
 
    // start_game
-   socket.on('start_game', function() {
+   socket.on('start_game', function(numAI) {
       if (game.isGameStarted()) {
          return;
       }
+      
+      console.log('Number of AI to create: ' + numAI);
+      // Add code to add AI units
+      for (var i = 0; i < numAI; ++i) {
+         add_ai();
+      }
+      // game.addUser(ai);
       
       if (REQUIRE_FIVE && (game.getNumUsers() < 5 || game.getNumUsers() > 10)) {
          socket.emit('violation', "There must be between 5 and 10 people");
          return;
       }
       
-      role_list = game.newGame();
-      io.emit('game_started');
+      //role_list = game.newGame();
+      game.newGame();
+      broadcast0('game_started');
       
       socket.advanceRound();
    });
@@ -118,24 +192,19 @@ io.on('connection', function(socket) {
    /**********************/
    // send_role
    socket.on('send_role', function(name) {
-      if (role_list[name] === 'SPY') {
-         socket.emit('role', role_list[name], game.getSpies());
+      var role = game.getRole(name);
+      
+      if (role === 'SPY') {
+         socket.emit('role', role, game.getSpies());
       } else {
-         socket.emit('role', role_list[name]);
+         socket.emit('role', role);
       }
    });
-   
-   /*
-   // next_round
-   socket.on('next_round', function() {
-      socket.advanceRound();
-   });
-   */
    
    // team_list (submitting the mission team list)
    socket.on('team_list', function(team) {
       if (game.correctNumberOnTeam(team.length)) {
-         io.emit('vote_team', team);
+         broadcast1('vote_team', team);
          team_list = team;
       } else {
          socket.emit('violation', "Wrong number of people on team");
@@ -144,9 +213,12 @@ io.on('connection', function(socket) {
    
    // vote
    socket.on('vote', function(choice) {
+      // Submit the current vote
       if (game.teamVote(choice)) {
+         
+         // If everybody has voted, move on to the result analysis
          var result = game.getVoteResult();
-         io.emit('team_vote_result', result, team_list, role_list);
+         broadcast2('team_vote_result', result, team_list);
          if (result) {
          } else {
             socket.advanceVote();
@@ -156,17 +228,19 @@ io.on('connection', function(socket) {
    
    // mission
    socket.on('mission', function(res) {
+      // Submit the vote for the current mission
       if (game.mission(res)) {
+         
+         // Once everybody has voted, get results
          var result = game.missionResult();
          
          var winningTeam = game.getWinner();
          if (winningTeam !== -1) {
-            io.emit('victory', winningTeam);
+            broadcast1('victory', winningTeam);
             return;
          }
          
-         
-         io.emit('mission_result', result);
+         broadcast1('mission_result', result);
          
          socket.advanceRound();
       }
@@ -175,12 +249,13 @@ io.on('connection', function(socket) {
    
    socket.advanceVote = function() {
       if (game.nextVote()) {
-         io.emit('victory', 0);
+         // If the number of votes has exceeded 5
+         broadcast1('victory', 0);
          return;
       }
       var leader = game.getRoundLeader();
       user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
-      io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
+      broadcast3('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
    };
    
    socket.advanceRound = function() {

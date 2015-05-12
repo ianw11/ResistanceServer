@@ -61,6 +61,7 @@ socket.on('dropped_user', function(name) {
 });
 
 
+
 /* When the server informs the clients that the game has started */
 socket.on('game_started', function() {
    console.log('Received the ok');
@@ -78,7 +79,7 @@ socket.on('role', function(role, teammates) {
       var mates = $('#teammates');
       for (var i = 0; i < teammates.length; ++i) {
          var li = document.createElement('li');
-         li.innerHTML = teammates[i];
+         li.innerHTML = teammates[i].name;
          mates.append(li);
       }
    }
@@ -91,10 +92,10 @@ socket.on('leader', function(userList, numberOfAgents) {
    var multiSelect = $('#leader_select');
    $('#leaderInfo').toggle(0);
    
-   userList.forEach(function(currentValue, index, array) {
+   userList.forEach(function(user, index, array) {
       var opt = document.createElement('option');
-      opt.value = currentValue;
-      opt.innerHTML = currentValue;
+      opt.value = user.name;
+      opt.innerHTML = user.name;
       multiSelect.append(opt);
    });
    
@@ -124,7 +125,7 @@ socket.on('vote_team', function(team) {
 });
 
 /* When the vote has gone through */
-socket.on('team_vote_result', function(res, team, role) {
+socket.on('team_vote_result', function(res, team) {
    isLeader = false;
    if (res) {
       setHeaderText('Vote passed');
@@ -138,13 +139,10 @@ socket.on('team_vote_result', function(res, team, role) {
       swapVisibility($('#mission'));
       
       if (onMission) {
-            //console.log("I'm on a mission! || " + role[thisUser]);
             $('#on_mission').toggle(0);
             if (thisRole === 'SPY')
                $('#mission_vote_fail').toggle(0);
                
-         } else {
-            //console.log("I'm not on a mission || " + role[thisUser]);
          }
       
    } else {
@@ -159,10 +157,15 @@ socket.on('mission_result', function(res) {
 
 
 socket.on('victory', function(side) {
+   var text = "";
    if (side === 0)
-      setHeaderText("SPIES WIN");
+      text += "SPIES WIN";
    else
-      setHeaderText("RESISTANCE WINS");
+      text += "RESISTANCE WINS";
+   
+   text += "    (Refresh to play another)"
+   
+   setHeaderText(text);
    
    swapVisibility($('#emptyDiv'));
 });
@@ -190,7 +193,8 @@ socket.on('violation', function(msg) {
 
 /* Handler for the startGameButton */
 var startGame = function() {
-   socket.emit('start_game');
+   var numAI = $('#selectNumAI')[0].value;
+   socket.emit('start_game', numAI);
 };
 
 /* Helper function to switch out visibility */

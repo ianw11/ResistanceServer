@@ -1,9 +1,18 @@
-module.exports = {
+var Player = function(name) {
+   this.name = name;
+   
+   this.setRole = function(role) {
+      this.role = role;
+   };
+}
 
+module.exports = {
+   
    Game: function() {
-      /* userList holds all the names of people playing */
+      /* userList is an array of ndx:<Player>
+      where <Player> is a Player object containing all relevant info */
       var userList = [];
-      var roles = {};
+      
       var spies = [];
       var isStarted = false;
       
@@ -18,10 +27,11 @@ module.exports = {
       var playersVoted = 0;
       
       /* leader is the index of the player who is the round leader */
-      var leader;
+      var leader = -1;
       
       var missionVoted = 0;
       var missionPassed = true;
+      
       
       console.log('New game object instantiated');
    
@@ -43,10 +53,10 @@ module.exports = {
          case 6:
             for (; i < 2; ++i) {
                spies[i] = userList[i];
-               roles[userList[i]] = 'SPY';
+               userList[i].setRole('SPY');
             }
             for (; i < userList.length; ++i) {
-               roles[userList[i]] = 'RESISTANCE';
+               userList[i].setRole('RESISTANCE');
             }
             break;
          case 7:
@@ -54,55 +64,62 @@ module.exports = {
          case 9:
             for (; i < 3; ++i) {
                spies[i] = userList[i];
-               roles[userList[i]] = 'SPY';
+               userList[i].setRole('SPY');
             }
             for (; i < userList.length; ++i) {
-               roles[userList[i]] = 'RESISTANCE';
+               userList[i].setRole('RESISTANCE');
             }
             break;
          case 10:
             for (; i < 4; ++i) {
                spies[i] = userList[i];
-               roles[userList[i]] = 'SPY';
+               userList[i].setRole('SPY');
             }
             for (; i < userList.length; ++i) {
-               roles[userList[i]] = 'RESISTANCE';
+               userList[i].setRole('RESISTANCE');
             }
             break;
 
          default:
             for (; i < userList.length - 1; ++i) {
-               roles[userList[i]] = 'SPY';
+               userList[i].setRole('SPY');
                spies[i] = userList[i];
             }
             for (; i < userList.length; ++i) {
-               roles[userList[i]] = 'RESISTANCE';
+               userList[i].setRole('RESISTANCE');
             }
             break;
          }
          
-         return roles;
       };
       
       this.nextRound = function() {
-         roundNumber++;
+         ++roundNumber;
          voteCount = 1;
-         if (++leader === userList.length) {
-            leader = 0;
-         }
+         
+         this.advanceLeader();
          
          return roundNumber > 5;
       };
       
       this.nextVote = function() {
          ++voteCount;
-         if (++leader === userList.length) {
-            leader = 0;
-         }
+         
+         this.advanceLeader();
          
          return voteCount > 5;
       };
       
+      this.advanceLeader = function() {
+         if (++leader === userList.length) {
+            leader = 0;
+         }
+      };
+      
+      /***********************************************************************/
+      
+      /* For each round and for X players in a game,
+      returns the number of agents needed to go on a mission */
       this.getNumberOfAgents = function() {
          switch (userList.length) {
             case 5:
@@ -173,11 +190,14 @@ module.exports = {
          return 1;
       };
       
-      
+      /* Function to verify enough agents are going on a mission */
       this.correctNumberOnTeam = function(num) {
          return this.getNumberOfAgents() === num;
       };
       
+      /***********************************************************************/
+      
+      /* Accepts a vote for the mission team */
       this.teamVote = function(choice) {
          voteYesCount += choice;
          
@@ -189,6 +209,7 @@ module.exports = {
          return false;
       };
       
+      /* Returns the result of if a team is accepted */
       this.getVoteResult = function() {
          var result = vote;
          vote = false;
@@ -198,6 +219,9 @@ module.exports = {
          return result;
       };
       
+      /***********************************************************************/
+      
+      /* Accepts the result of a mission */
       this.mission = function(choice) {
          if (choice === 0) {
             missionPassed = false;
@@ -210,6 +234,7 @@ module.exports = {
          return false;
       };
       
+      /* Returns the overall result of a mission */
       this.missionResult = function() {
          missionVoted = 0;
          
@@ -224,13 +249,21 @@ module.exports = {
          return res;
       };
       
+      /***********************************************************************/
       
+      /* Functions related to users */
       this.addUser = function(name) {
-         userList[userList.length] = name;
+         var p = new Player(name);
+         userList[userList.length] = p;
       };
       
       this.dropUser = function(name) {
-         var index = userList.indexOf(name);
+         var index = -1;
+         userList.forEach(function(val, ndx) {
+            if (val.name === name)
+               index = ndx;
+         });
+         //var index = userList.indexOf(name);
          userList.splice(index, 1);
       };
       
@@ -238,14 +271,23 @@ module.exports = {
          return userList.length;
       };
 
-
       this.getUsers = function() {
          return userList;
       };
+
+      this.getRole = function(name) {
+         userList.forEach(function(val, ndx) {
+            if (val.name === name) {
+               return val.role;
+            }
+         });
+      }
       
+      /*
       this.getRoles = function() {
          return roles;
       };
+      */
       
       this.isGameStarted = function() {
          return isStarted;
@@ -256,7 +298,7 @@ module.exports = {
       };
       
       this.getRoundLeader = function() {
-         return userList[leader];
+         return userList[leader].name;
       };
       
       this.getRoundNumber = function() {
@@ -288,6 +330,12 @@ module.exports = {
       this.verifyState = function() {
          if (roundNumber > 5) {
             throw "Round Number too high: " + roundNumber;
+         }
+         if (numSpyWins > 3) {
+            throw "Num Spy Wins is too high: " + numSpyWins;
+         }
+         if (numResistanceWins > 3) {
+            throw "Num Resistance Wins is too high: " + numResistanceWins;
          }
       };
       
