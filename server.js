@@ -135,7 +135,6 @@ io.on('connection', function(socket) {
 
    // start_game
    socket.on('start_game', function() {
-      console.log(io.sockets.sockets.length);
       
       if (game.isGameStarted()) {
          return;
@@ -244,7 +243,6 @@ io.on('connection', function(socket) {
    
    
    socket.on('chat_message', function(msg) {
-      console.log("Received message");
       io.emit('chat_message', msg);
    });
    

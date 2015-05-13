@@ -208,7 +208,6 @@ socket.on('violation', function(msg) {
 
 /* Chat functions */
 socket.on('chat_message', function(msg) {
-   console.log('received message');
    
    var ul = $('#messages');
    var li = $('<li>').text(msg);
