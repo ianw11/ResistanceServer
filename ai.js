@@ -66,6 +66,7 @@ module.exports = {
          // The AI must select <numberOfAgents> from <userList> to go on a mission
          players = game.getUsers().slice(0);
          var team_list = [];
+
 		 var place = -1;
          players.forEach(function(val, ndx) {
             if (val.name === self.NAME) {
@@ -75,17 +76,12 @@ module.exports = {
 		 console.log("the index is: "+place)
 		 team_list[0] = players[place].name;
 		 var q = 0;
-		 //if(self.role === "SPY"){
 		    while(team_list.length != numberOfAgents) {
 			    if(q === place){q++}
 			    team_list[team_list.length] = players[q].name;
 			    q++;
 			    console.log("number of team member"+team_list.length);
 		    }
-         /*}
-		 if(slef.role === "RESISTANCE"){
-			 
-		 }*/
          self.socket.emit('team_list', team_list);
       });
       
