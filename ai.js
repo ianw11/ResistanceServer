@@ -64,7 +64,7 @@ module.exports = {
       
       this.socket.on('leader', function(userList, numberOfAgents) {
          // The AI must select <numberOfAgents> from <userList> to go on a mission
-         players = game.getUsers().slice(0);
+         players = game.getUsers();
          var team_list = [];
 
 		 var place = -1;
