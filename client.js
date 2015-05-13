@@ -15,6 +15,8 @@ var isLeader = false;
 window.onload = function() {
    visibleElem = $('#index');
    
+   $('#chatSendButton')[0].onclick = sendChat;
+   
    $('#addAIButton')[0].onclick = addAI;
    $('#addMultipleAIButton')[0].onclick = addMultipleAI;
    
@@ -40,6 +42,8 @@ $('#nameInputForm').submit(function() {
    thisUser = name;
    return false;
 });
+
+$('#chatForm').submit(sendChat);
 
 /* When the server has accepted the user */
 socket.on('accepted_user', function() {
@@ -200,6 +204,31 @@ socket.on('violation', function(msg) {
       $('#leaderInfo').toggle(0);
    }
 });
+
+
+/* Chat functions */
+socket.on('chat_message', function(msg) {
+   console.log('received message');
+   
+   var ul = $('#messages');
+   var li = $('<li>').text(msg);
+   ul.append(li);
+});
+
+var sendChat = function() {
+   if (thisUser === null)
+      thisUser = 'Anon';
+   
+   if ($('#m')[0].value.length === 0)
+      return false;
+   
+   socket.emit('chat_message', thisUser + '-> '  + $('#m')[0].value);
+   
+   $('#m')[0].value = '';
+   
+   return false;
+};
+
 
 
 /* Helper functions */

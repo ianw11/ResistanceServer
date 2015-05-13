@@ -8,6 +8,9 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
+/************GLOBAL VARIABLES****************/
+var REQUIRE_FIVE = true;
+/********************************************/
 
 var game = null;
 var connectedUsers = 0;
@@ -18,7 +21,7 @@ var user_list = null;
 
 var team_list = null;
 
-var REQUIRE_FIVE = false;
+
 
 /* Code to allow AI to take part in the game too */
 var connected_ai = [];
@@ -239,6 +242,11 @@ io.on('connection', function(socket) {
       socket.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
    });
    
+   
+   socket.on('chat_message', function(msg) {
+      console.log("Received message");
+      io.emit('chat_message', msg);
+   });
    
 });
 
