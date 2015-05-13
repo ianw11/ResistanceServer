@@ -115,6 +115,8 @@ module.exports = {
          if (++leader === userList.length) {
             leader = 0;
          }
+         
+         this.verifyState();
       };
       
       /***********************************************************************/
@@ -217,6 +219,8 @@ module.exports = {
          playersVoted = 0;
          voteYesCount = 0;
          
+         this.verifyState();
+         
          return result;
       };
       
@@ -247,6 +251,9 @@ module.exports = {
          
          var res = missionPassed;
          missionPassed = true;
+         
+         this.verifyState();
+         
          return res;
       };
       
@@ -288,12 +295,6 @@ module.exports = {
          return res;
       }
       
-      /*
-      this.getRoles = function() {
-         return roles;
-      };
-      */
-      
       this.isGameStarted = function() {
          return isStarted;
       };
@@ -323,6 +324,8 @@ module.exports = {
       }
       
       this.getWinner = function() {
+         this.verifyState();
+         
          if (numSpyWins === 3)
             return 0;
          if (numResistanceWins === 3)
