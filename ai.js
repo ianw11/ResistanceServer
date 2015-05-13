@@ -36,6 +36,9 @@ module.exports = {
       this.voteNum = -1;
       
       this.teammates = null;
+	  //var friends = [];
+	 // var wentMission = [];
+	  //var round;
       
       
       this.socket.on('accepted_user', function() {
@@ -72,13 +75,17 @@ module.exports = {
 		 console.log("the index is: "+place)
 		 team_list[0] = players[place].name;
 		 var q = 0;
-		 while(team_list.length != numberOfAgents) {
-			 if(q === place){q++}
-			 team_list[team_list.length] = players[q].name;
-			 q++;
-			 console.log("number of team member"+team_list.length);
-		 }
-         
+		 //if(self.role === "SPY"){
+		    while(team_list.length != numberOfAgents) {
+			    if(q === place){q++}
+			    team_list[team_list.length] = players[q].name;
+			    q++;
+			    console.log("number of team member"+team_list.length);
+		    }
+         /*}
+		 if(slef.role === "RESISTANCE"){
+			 
+		 }*/
          self.socket.emit('team_list', team_list);
       });
       
@@ -113,7 +120,8 @@ module.exports = {
       this.socket.on('team_vote_result', function(res, team) {
          // If this AI is on the team (ie team[i] is 'AI <id>') then it may vote on the mission
          // Otherwise, nothing
-         
+		 //round = game.getRoundNumber();
+		 //wentMission[round] = team;
          var isOnMission = false;
          team.forEach(function(val, ndx) {
             if (val === self.NAME) {
@@ -136,9 +144,13 @@ module.exports = {
             var vote = worthy ? 1 : 0;
             self.socket.emit('mission', vote);
          }
-         
-      });
       
+      });
+      /*this.socket.on('mission_result',function(result){
+		 if(result){
+			 friends[round] = wentMission[round];
+		 } 
+	  });*/
       
       this.terminate = function() {
          this.socket.disconnect();
