@@ -63,10 +63,13 @@ module.exports = {
       
       this.socket.on('leader', function(userList, numberOfAgents) {
          // The AI must select <numberOfAgents> from <userList> to go on a mission
+         players = game.getUsers();
+         var team_list = [];
+		 for(i=0; i<numberOfAgents; i++) {
+			 team_list[i] = players[i].name;
+		 }
          
-         //var team_list = [];
-         
-         //socket.emit('team_list', team_list);
+         socket.emit('team_list', team_list);
       });
       
       // The AI doesn't care about this function
@@ -77,10 +80,16 @@ module.exports = {
          // The AI must decide if the <team> is worthy to go on a mission
          // 1 for yes, 0 for no
          
-         var worthy = false;
-         
-         //var vote = worthy ? 1 : 0;
-         //socket.emit('vote', vote);
+         var worthy = true;
+		 //ai will always approve the team
+         if(self.role === "RESISTANCE") {
+			 worthy = true;
+		 }
+		 if(self.role === "SPY") {
+			 worthy = true;
+		 }
+         var vote = worthy ? 1 : 0;
+         socket.emit('vote', vote);
       });
       
       this.socket.on('team_vote_result', function(res, team) {
@@ -97,12 +106,15 @@ module.exports = {
          if (isOnMission) {
             // Add code to decide if the mission should pass or fail
             
-            var worthy = false;
-            
+            var worthy = true;
+			/*//spy fails every time
+            if(self.role === "SPY"){
+				worthy = false;
+			}
             // Resistance can only vote yes
-            if (self.role == "RESISTANCE")
+            if (self.role === "RESISTANCE"){
                worthy = true;
-            
+            }*/
             var vote = worthy ? 1 : 0;
             self.socket.emit('mission', vote);
          }
