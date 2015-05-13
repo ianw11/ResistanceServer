@@ -53,7 +53,6 @@ app.get('/img/switch.png', function(req, res) {
 });
 
 io.on('connection', function(socket) {
-   console.log('connection established');
    
    // connect
    socket.on('add_name', function(name) {
@@ -72,6 +71,11 @@ io.on('connection', function(socket) {
       // instances of games at one time
       if (game.isGameStarted()) {
          socket.emit('_error', "Game has already started");
+         return;
+      }
+      
+      if (connectedUsers >= 10) {
+         socket.emit('_error', "Game has 10 people already");
          return;
       }
       
@@ -128,6 +132,8 @@ io.on('connection', function(socket) {
 
    // start_game
    socket.on('start_game', function() {
+      console.log(io.sockets.sockets.length);
+      
       if (game.isGameStarted()) {
          return;
       }
@@ -150,7 +156,6 @@ io.on('connection', function(socket) {
    // send_role
    socket.on('send_role', function(name) {
       var role = game.getRole(name);
-      console.log('SERVER.JS> '+name + " has role: " + role);
       if (role === 'SPY') {
          socket.emit('role', role, game.getSpies());
       } else {

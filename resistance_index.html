@@ -6,12 +6,18 @@
    <style>
       form { background: #000; }
       form input { }
-      form button { background: rgb(130, 224, 255); }
+      button { background: rgb(225, 250, 0); }
       
       .flex { display: flex; flex-direction: column; }
       #container { display: flex; }
       
       .mycenter { margin: auto; }
+      
+      .header {   text-align:center;
+                  background: rgb(43, 186, 184);
+               }
+      
+      #container { background: rgb(186, 43, 45); }
    </style>
    <link href='multi_select' media='screen' rel='stylesheet' type='text/css'>
 </head>
@@ -19,8 +25,12 @@
 <body>
    <div class='flex'>
    <div class='header mycenter'>
-      <h1 id='status'>HEADER</h1>
+      <h1 id='status'>THE RESISTANCE</h1>
       <h1 id='scoreBar'></button>
+      <h1 id='roleElem'></h1>
+      <p>
+      Your Teammates:
+      <ul id='teammates'></ul>
    </div>
    <div id='container'>
       <button class='restart myhidden' id='restartButton'>Restart</button>
@@ -39,21 +49,23 @@
    
       <!-- 2. Wait for all users -->
       <div class='mycenter myhidden' id='queue_screen'>
+         <button id='addAIButton'>Add AI</button>
+         <p>
+         <input id='addMultipleAI' type='number' value='4'></input> <button id='addMultipleAIButton'>Add Multiple AI</button>
+         <p>
          <h1>USER LIST</h1>
          <ul id='queue'></ul>
          <p>
-         <button id='addAIButton'>Add AI</button>
+         <h3 id='numInQueue'></h3>
          <p>
          <button id='startGameButton'>Start Game</button>
       </div>
       
+      
+      
       <div class='mycenter myhidden' id='role_screen'>
-         <h1 id='roleElem'></h1>
          <h1 id='currLeader'></h1>
          <h2 id='roundAndVote'></h2>
-         <p>
-         Teammates:
-         <ul id='teammates'></ul>
          <p>
          <div id='leaderInfo' class='myhidden'>
             <select multiple='multiple' id='leader_select' name='my-select[]' >
