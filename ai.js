@@ -107,14 +107,14 @@ module.exports = {
             // Add code to decide if the mission should pass or fail
             
             var worthy = true;
-			/*//spy fails every time
+			//spy fails every time
             if(self.role === "SPY"){
 				worthy = false;
 			}
             // Resistance can only vote yes
             if (self.role === "RESISTANCE"){
                worthy = true;
-            }*/
+            }
             var vote = worthy ? 1 : 0;
             self.socket.emit('mission', vote);
          }
