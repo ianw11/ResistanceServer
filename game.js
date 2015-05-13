@@ -91,6 +91,7 @@ module.exports = {
             break;
          }
          
+         userList = shuffle(userList);
       };
       
       this.nextRound = function() {
@@ -284,7 +285,7 @@ module.exports = {
             }
          });
          
-         console.log(name + ' will be given: ' + res);
+         console.log('GAME.JS> '+name + ' will be given: ' + res);
          
          return res;
       }

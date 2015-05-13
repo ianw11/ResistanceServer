@@ -1,11 +1,29 @@
+
+
+
+
 module.exports = {
    AI: function(id, game) {
-      var NAME = 'AI ' + id;
+      this.NAME = 'AI ' + id;
       
       // Set up the client connection and add self to game list
+      
+      var toDel = [];
+      for (var key in require.cache) {
+         //console.log(key);
+         if (key.indexOf('socket.io-client') > -1) {
+            toDel[toDel.length] = key;
+         }
+      }
+      console.log('About to delete %d items', toDel.length);
+      toDel.forEach(function(val) {
+         delete require.cache[val];
+      });
+      
       var io = require('socket.io-client');
-      var socket = io.connect('http://localhost:3000');
-      socket.emit('add_name', NAME);
+      this.socket = io.connect('http://localhost:3000');
+      
+      this.socket.emit('add_name', this.NAME);
       
       // Passed in parameters
       this.id = id;
@@ -21,29 +39,29 @@ module.exports = {
       this.teammates = null;
       
       
-      socket.on('accepted_user', function() {
+      this.socket.on('accepted_user', function() {
          // Expected
       });
-      socket.on('new_user', function(name) {
+      this.socket.on('new_user', function(name) {
          // The AI doesn't care about new users
       });
-      socket.on('dropped_user', function(name) {
+      this.socket.on('dropped_user', function(name) {
          // The AI doesn't care about dropped users
       });
       
       /* When the game starts, each AI must request its role */
-      socket.on('game_started', function() {
-         socket.emit('send_role', NAME);
+      this.socket.on('game_started', function() {
+         self.socket.emit('send_role', self.NAME);
       });
       
-      socket.on('role', function(role, spies) {
+      this.socket.on('role', function(role, spies) {
          self.role = role;
-         console.log(NAME + " has role " + self.role);
+         console.log('AI.JS> '+self.NAME + " has role " + self.role);
          if (role === 'SPY')
             self.teammates = spies;
       });
       
-      socket.on('leader', function(userList, numberOfAgents) {
+      this.socket.on('leader', function(userList, numberOfAgents) {
          // The AI must select <numberOfAgents> from <userList> to go on a mission
          
          //var team_list = [];
@@ -52,10 +70,10 @@ module.exports = {
       });
       
       // The AI doesn't care about this function
-      socket.on('curr_leader', function(name, roundNum, voteNum) {
+      this.socket.on('curr_leader', function(name, roundNum, voteNum) {
       });
       
-      socket.on('vote_team', function(team) {
+      this.socket.on('vote_team', function(team) {
          // The AI must decide if the <team> is worthy to go on a mission
          // 1 for yes, 0 for no
          
@@ -65,7 +83,7 @@ module.exports = {
          //socket.emit('vote', vote);
       });
       
-      socket.on('team_vote_result', function(res, team) {
+      this.socket.on('team_vote_result', function(res, team) {
          // If this AI is on the team (ie team[i] is 'AI <id>') then it may vote on the mission
          // Otherwise, nothing
          
@@ -86,10 +104,15 @@ module.exports = {
                worthy = true;
             
             var vote = worthy ? 1 : 0;
-            socket.emit('mission', vote);
+            self.socket.emit('mission', vote);
          }
          
       });
+      
+      
+      this.terminate = function() {
+         this.socket.disconnect();
+      };
       
    }
 };

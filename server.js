@@ -117,6 +117,12 @@ io.on('connection', function(socket) {
          console.log("No more users, closing game");
          game = null;
          team_list = null;
+         
+         connected_ai.forEach(function(val, ndx) {
+            val.terminate();
+         });
+         connected_ai = [];
+         connectedUsers = 0;
       }
    });
 
@@ -144,7 +150,7 @@ io.on('connection', function(socket) {
    // send_role
    socket.on('send_role', function(name) {
       var role = game.getRole(name);
-      console.log(name + " has role: " + role);
+      console.log('SERVER.JS> '+name + " has role: " + role);
       if (role === 'SPY') {
          socket.emit('role', role, game.getSpies());
       } else {
