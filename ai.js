@@ -36,9 +36,6 @@ module.exports = {
       this.voteNum = -1;
       
       this.teammates = null;
-	  //var friends = [];
-	 // var wentMission = [];
-	  //var round;
       
       
       this.socket.on('accepted_user', function() {
@@ -108,8 +105,7 @@ module.exports = {
       this.socket.on('team_vote_result', function(res, team) {
          // If this AI is on the team (ie team[i] is 'AI <id>') then it may vote on the mission
          // Otherwise, nothing
-		 //round = game.getRoundNumber();
-		 //wentMission[round] = team;
+         
          var isOnMission = false;
          team.forEach(function(val, ndx) {
             if (val === self.NAME) {
@@ -132,13 +128,9 @@ module.exports = {
             var vote = worthy ? 1 : 0;
             self.socket.emit('mission', vote);
          }
-      
+         
       });
-      /*this.socket.on('mission_result',function(result){
-		 if(result){
-			 friends[round] = wentMission[round];
-		 } 
-	  });*/
+      
       
       this.terminate = function() {
          this.socket.disconnect();
