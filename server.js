@@ -122,6 +122,7 @@ io.on('connection', function(socket) {
       connectedUsers--;
       if (connectedUsers == connected_ai.length && game != null) {
          console.log("No more users, closing game");
+         io.emit('chat_message', 'ACCEPTING PLAYERS');
          game = null;
          team_list = null;
          
@@ -146,10 +147,11 @@ io.on('connection', function(socket) {
          return;
       }
       
-      //role_list = game.newGame();
       game.newGame();
       
       io.emit('game_started');
+      
+      socket.sendChat(game.getNumUsers() + ' players -- ' + game.getNumResistance() + ' resistance and ' + game.getNumSpies() + ' spies');
       
       socket.advanceRound();
    });
@@ -180,13 +182,17 @@ io.on('connection', function(socket) {
       // Submit the current vote
       if (game.teamVote(choice)) {
          
+         socket.sendChat(game.teamVoteStats() + " YES votes out of " + game.getNumUsers());
+         
          // If everybody has voted, move on to the result analysis
          var result = game.getVoteResult();
          io.emit('team_vote_result', result, team_list);
          if (result) {
+            socket.sendChat('Mission: ' + team_list);
          } else {
             socket.advanceVote();
          }
+      } else {
       }
    });
    
@@ -195,12 +201,14 @@ io.on('connection', function(socket) {
       // Submit the vote for the current mission
       if (game.mission(res)) {
          
+         socket.sendChat(game.missionVoteStats() + ' FAIL votes out of ' + game.getNumberOfAgents());
+         
          // Once everybody has voted, get results
          var result = game.missionResult();
          
          var winningTeam = game.getWinner();
          if (winningTeam !== -1) {
-            io.emit('victory', winningTeam);
+            socket.victory(winningTeam);
             return;
          }
          
@@ -214,7 +222,7 @@ io.on('connection', function(socket) {
    socket.advanceVote = function() {
       if (game.nextVote()) {
          // If the number of votes has exceeded 5
-         io.emit('victory', 0);
+         socket.victory(0);
          return;
       }
       var leader = game.getRoundLeader();
@@ -224,7 +232,7 @@ io.on('connection', function(socket) {
    
    socket.advanceRound = function() {
       if (game.nextRound()) {
-         io.emit('victory', game.getWinner());
+         socket.victory(game.getWinner());
          return;
       }
       
@@ -236,6 +244,19 @@ io.on('connection', function(socket) {
    };
    
    
+   socket.victory = function(team) {
+      io.emit('victory', team);
+      var users = game.getUsers();
+      
+      var userText = "|| ";
+      
+      users.forEach(function(val) {
+         userText += val.name + ' is ' + val.role + ' || ';
+      });
+      
+      socket.sendChat(userText);
+   };
+   
    // To update the client's scores
    socket.on('update_scores', function() {
       socket.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
@@ -245,6 +266,11 @@ io.on('connection', function(socket) {
    socket.on('chat_message', function(msg) {
       io.emit('chat_message', msg);
    });
+   
+   
+   socket.sendChat = function(msg) {
+      io.emit('chat_message', 'GAME-> ' + msg);
+   };
    
 });
 

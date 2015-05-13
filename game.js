@@ -31,6 +31,7 @@ module.exports = {
       
       var missionVoted = 0;
       var missionPassed = true;
+      var numFailed = 0;
       
       
       console.log('New game object instantiated');
@@ -212,6 +213,10 @@ module.exports = {
          return false;
       };
       
+      this.teamVoteStats = function() {
+         return voteYesCount;
+      };
+      
       /* Returns the result of if a team is accepted */
       this.getVoteResult = function() {
          var result = vote;
@@ -230,6 +235,7 @@ module.exports = {
       this.mission = function(choice) {
          if (choice === 0) {
             missionPassed = false;
+            numFailed++;
          }
          
          if (++missionVoted === this.getNumberOfAgents()) {
@@ -239,9 +245,14 @@ module.exports = {
          return false;
       };
       
+      this.missionVoteStats = function() {
+         return numFailed;
+      };
+      
       /* Returns the overall result of a mission */
       this.missionResult = function() {
          missionVoted = 0;
+         numFailed = 0;
          
          if (missionPassed) {
             ++numResistanceWins;
@@ -279,6 +290,28 @@ module.exports = {
          return userList.length;
       };
 
+      this.getNumSpies = function() {
+         switch(this.getNumUsers()) {
+         case 5:
+         case 6:
+            return 2;
+         case 7:
+         case 8:
+         case 9:
+            return 3;
+            break;
+         case 10:
+            return 4;
+
+         default:
+            return this.getNumUsers() - 1;
+         }
+      };
+      
+      this.getNumResistance = function() {
+         return this.getNumUsers() - this.getNumSpies();
+      };
+      
       this.getUsers = function() {
          return userList;
       };
