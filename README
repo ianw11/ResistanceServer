@@ -1,2 +1,8 @@
-<h1>Testing README capabilities on Github</h1>
-<h2>This is a Resistance server</h2>
+This is code to play the Resistance game online.
+
+It is a JS Express/Socket.IO experiment.
+
+To run, you need node.js installed.
+Then cd into the root directory and run 'node server.js'
+Then in a web browser, navigate to localhost:3000
+If the code is run on a public computer, then it's <ip>:3000
