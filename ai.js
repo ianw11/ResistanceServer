@@ -36,6 +36,7 @@ module.exports = {
       this.voteNum = -1;
       
       this.teammates = null;
+	  this.friends = [];
       
       
       this.socket.on('accepted_user', function() {
@@ -73,12 +74,22 @@ module.exports = {
 		 console.log("the index is: "+place)
 		 team_list[0] = players[place].name;
 		 var q = 0;
+		 //if(slef.role === "SPY") {
 		    while(team_list.length != numberOfAgents) {
 			    if(q === place){q++}
 			    team_list[team_list.length] = players[q].name;
 			    q++;
 			    console.log("number of team member"+team_list.length);
 		    }
+		 //}
+		 /*if(self.role === "RESISTANCE"){
+			while(team_list.length != numberOfAgents) {
+			    if(q === place){q++}
+			    team_list[team_list.length] = players[q].name;
+			    q++;
+			    console.log("number of team member"+team_list.length);
+		    } 
+		 }*/
          self.socket.emit('team_list', team_list);
       });
       
@@ -89,11 +100,18 @@ module.exports = {
       this.socket.on('vote_team', function(team) {
          // The AI must decide if the <team> is worthy to go on a mission
          // 1 for yes, 0 for no
-         
-         var worthy = true;
+		 var isOnTeam = false;
+         team.forEach(function(val, ndx) {
+            if (val === self.NAME) {
+               isOnTeam = true;
+            }
+         });
+         var worthy = false;
 		 //ai will always approve the team
          if(self.role === "RESISTANCE") {
-			 worthy = true;
+			 if(isOnTeam){
+			    worthy = true;
+			 }	
 		 }
 		 if(self.role === "SPY") {
 			 worthy = true;
