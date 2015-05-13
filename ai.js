@@ -61,10 +61,22 @@ module.exports = {
       
       this.socket.on('leader', function(userList, numberOfAgents) {
          // The AI must select <numberOfAgents> from <userList> to go on a mission
-         players = game.getUsers();
+         players = game.getUsers().slice(0);
          var team_list = [];
-		 for(i=0; i<numberOfAgents; i++) {
-			 team_list[i] = players[i].name;
+		 var place = -1;
+         players.forEach(function(val, ndx) {
+            if (val.name === self.NAME) {
+               place = ndx;
+            }
+         });
+		 console.log("the index is: "+place)
+		 team_list[0] = players[place].name;
+		 var q = 0;
+		 while(team_list.length != numberOfAgents) {
+			 if(q === place){q++}
+			 team_list[team_list.length] = players[q].name;
+			 q++;
+			 console.log("number of team member"+team_list.length);
 		 }
          
          self.socket.emit('team_list', team_list);
