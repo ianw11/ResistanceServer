@@ -11,12 +11,10 @@ var onMission = false;
 
 var isLeader = false;
 
-/* Set up onclick listeners */
 window.onload = function() {
    visibleElem = $('#index');
    
    $('#addAIButton')[0].onclick = addAI;
-   $('#addMultipleAIButton')[0].onclick = addMultipleAI;
    
    $('#startGameButton')[0].onclick = startGame;
    $('#selectTeamButton')[0].onclick = selectTeam;
@@ -44,7 +42,7 @@ $('#nameInputForm').submit(function() {
 /* When the server has accepted the user */
 socket.on('accepted_user', function() {
    swapVisibility($('#queue_screen'));
-   setHeaderText("Welcome to the game!  Please wait for others...");
+   setHeaderText("Welcome to the game!");
    
    updateScoreBar();
 });
@@ -56,16 +54,12 @@ socket.on('new_user', function(name) {
    users[name] = li;
    li.innerHTML = name;
    queue.append(li);
-   
-   updateNumUsers();
 });
 
 /* When somebody's connection drops */
 socket.on('dropped_user', function(name) {
    var queue = $('#queue');
    users[name].parentNode.removeChild(users[name]);
-   
-   updateNumUsers();
 });
 
 
@@ -77,8 +71,9 @@ socket.on('game_started', function() {
 
 /* When the server informs this client what role it is */
 socket.on('role', function(role, teammates) {
+   console.log("Got role: " + role);
    var h1 = $('#roleElem')[0];
-   h1.innerHTML = 'You are: ' + role;
+   h1.innerHTML = role;
    thisRole = role;
    
    if (role === 'SPY') {
@@ -89,11 +84,6 @@ socket.on('role', function(role, teammates) {
          li.innerHTML = teammates[i].name;
          mates.append(li);
       }
-   } else {
-      var mates = $('#teammates');
-      var li = document.createElement('li');
-      li.innerHTML = '???';
-      mates.append(li);
    }
 });
 
@@ -140,7 +130,7 @@ socket.on('vote_team', function(team) {
 socket.on('team_vote_result', function(res, team) {
    isLeader = false;
    if (res) {
-      setHeaderText('Vote passed, Wait for Mission...');
+      setHeaderText('Vote passed');
       onMission = false;
       
       team.forEach(function(value, index) {
@@ -205,20 +195,7 @@ socket.on('violation', function(msg) {
 /* Helper functions */
 
 var addAI = function() {
-   if ($('#queue')[0].childElementCount < 10)
-      socket.emit('add_ai');
-};
-
-var addMultipleAI = function() {
-   var num = parseInt($('#addMultipleAI')[0].value);
-   if (num < 0)
-      return;
-   
-   if ((num + $('#queue')[0].childElementCount) <= 10) {
-      while(num--) {
-         addAI();
-      }
-   }
+   socket.emit('add_ai');
 };
 
 /* Handler for the startGameButton */
@@ -296,13 +273,6 @@ var voteMissionFail = function() {
    socket.emit('mission', 0);
 };
 
-
-// Updates the number of people in line for a game
-var updateNumUsers = function() {
-   var text = 'Num In Queue: ';
-   text += $('#queue')[0].childElementCount;
-   $('#numInQueue')[0].innerHTML = text;
-};
 
 // Function to update the header text
 var setHeaderText = function(txt) {

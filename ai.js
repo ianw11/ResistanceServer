@@ -10,6 +10,7 @@ module.exports = {
       
       var toDel = [];
       for (var key in require.cache) {
+         //console.log(key);
          if (key.indexOf('socket.io-client') > -1) {
             toDel[toDel.length] = key;
          }
@@ -58,6 +59,7 @@ module.exports = {
       
       this.socket.on('role', function(role, spies) {
          self.role = role;
+         console.log('AI.JS> '+self.NAME + " has role " + self.role);
          if (role === 'SPY')
             self.teammates = spies;
       });
