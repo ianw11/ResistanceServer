@@ -93,18 +93,10 @@ module.exports = {
          // The AI must decide if the <team> is worthy to go on a mission
          // 1 for yes, 0 for no
          
-         var worthy = false;
-		 var isOnTeam = false;
-         team.forEach(function(val, ndx) {
-            if (val === self.NAME) {
-               isOnMission = true;
-            }
-         });
+         var worthy = true;
 		 //ai will always approve the team
          if(self.role === "RESISTANCE") {
-			 if(isOnTeam) {
-			    worthy = true;
-			 }
+			 worthy = true;
 		 }
 		 if(self.role === "SPY") {
 			 worthy = true;
@@ -128,7 +120,7 @@ module.exports = {
          if (isOnMission) {
             // Add code to decide if the mission should pass or fail
             
-            var worthy = false;
+            var worthy = true;
 			//spy fails every time
             if(self.role === "SPY"){
 				worthy = false;
