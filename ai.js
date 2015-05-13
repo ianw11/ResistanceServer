@@ -69,7 +69,7 @@ module.exports = {
 			 team_list[i] = players[i].name;
 		 }
          
-         socket.emit('team_list', team_list);
+         self.socket.emit('team_list', team_list);
       });
       
       // The AI doesn't care about this function
@@ -89,7 +89,7 @@ module.exports = {
 			 worthy = true;
 		 }
          var vote = worthy ? 1 : 0;
-         socket.emit('vote', vote);
+         self.socket.emit('vote', vote);
       });
       
       this.socket.on('team_vote_result', function(res, team) {
