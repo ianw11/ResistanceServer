@@ -114,6 +114,8 @@ io.on('connection', function(socket) {
          return;
       }
       
+      socket.sendChat(socket['username'] + " has refreshed/disconnected");
+      
       game.dropUser(socket['username']);
       console.log(socket['username'] + " has disconnected");
       io.emit('dropped_user', socket['username']);
