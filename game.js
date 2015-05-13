@@ -292,8 +292,6 @@ module.exports = {
             }
          });
          
-         console.log('GAME.JS> '+name + ' will be given: ' + res);
-         
          return res;
       }
       
