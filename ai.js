@@ -37,6 +37,7 @@ module.exports = {
       
       this.teammates = null;
 	  this.friends = [];
+	  this.teamLast = [];
       
       
       this.socket.on('accepted_user', function() {
@@ -74,22 +75,23 @@ module.exports = {
 		 console.log("the index is: "+place)
 		 team_list[0] = players[place].name;
 		 var q = 0;
-		 //if(slef.role === "SPY") {
+		 if(self.role === "SPY") {
 		    while(team_list.length != numberOfAgents) {
 			    if(q === place){q++}
 			    team_list[team_list.length] = players[q].name;
 			    q++;
 			    console.log("number of team member"+team_list.length);
 		    }
-		 //}
-		 /*if(self.role === "RESISTANCE"){
+		 }
+		 else {
 			while(team_list.length != numberOfAgents) {
 			    if(q === place){q++}
+				//need to add people to the "friends" list and choose them
 			    team_list[team_list.length] = players[q].name;
 			    q++;
 			    console.log("number of team member"+team_list.length);
 		    } 
-		 }*/
+		 }
          self.socket.emit('team_list', team_list);
       });
       
@@ -123,7 +125,7 @@ module.exports = {
       this.socket.on('team_vote_result', function(res, team) {
          // If this AI is on the team (ie team[i] is 'AI <id>') then it may vote on the mission
          // Otherwise, nothing
-         
+         self.teamLast.push(team);
          var isOnMission = false;
          team.forEach(function(val, ndx) {
             if (val === self.NAME) {
