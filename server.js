@@ -124,7 +124,7 @@ io.on('connection', function(socket) {
       connectedUsers--;
       if (connectedUsers == connected_ai.length && game != null) {
          console.log("No more users, closing game");
-         io.emit('chat_message', 'ACCEPTING PLAYERS');
+         socket.sendChat('ACCEPTING PLAYERS');
          game = null;
          team_list = null;
          
@@ -194,7 +194,6 @@ io.on('connection', function(socket) {
          } else {
             socket.advanceVote();
          }
-      } else {
       }
    });
    
@@ -204,6 +203,7 @@ io.on('connection', function(socket) {
       if (game.mission(res)) {
          
          socket.sendChat(game.missionVoteStats() + ' FAIL votes out of ' + game.getNumberOfAgents());
+         io.emit('AI_mission', game.missionVoteStats(), game.getNumberOfAgents());
          
          // Once everybody has voted, get results
          var result = game.missionResult();
@@ -220,16 +220,24 @@ io.on('connection', function(socket) {
       }
    });
    
-   
-   socket.advanceVote = function() {
-      if (game.nextVote()) {
-         // If the number of votes has exceeded 5
-         socket.victory(0);
-         return;
-      }
+   socket.newLeader = function() {
       var leader = game.getRoundLeader();
       user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
       io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
+      
+      socket.sendChat('--------------------------------');
+      socket.sendChat('--------------------------------');
+      socket.sendChat('New Captain: ' + leader);
+      socket.sendChat('--------------------------------');
+   };
+   
+   socket.advanceVote = function() {
+      if (game.nextVote()) {
+         socket.victory(0);
+         return;
+      }
+      
+      socket.newLeader();
    };
    
    socket.advanceRound = function() {
@@ -238,10 +246,7 @@ io.on('connection', function(socket) {
          return;
       }
       
-      var leader = game.getRoundLeader();
-      user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
-      io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
-      
+      socket.newLeader();
       io.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
    };
    

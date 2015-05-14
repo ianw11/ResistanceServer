@@ -38,9 +38,7 @@ module.exports = {
    
       this.newGame = function() {
          isStarted = true;
-         
          leader = 0;
-         
          userList = shuffle(userList);
          
          /* This loop walks through the user list and assigns a
@@ -92,6 +90,8 @@ module.exports = {
             break;
          }
          
+         // After assigning roles, reshuffle the users so it's not possible
+         // to determine who is what role purely based on turn order
          userList = shuffle(userList);
       };
       
@@ -113,9 +113,8 @@ module.exports = {
       };
       
       this.advanceLeader = function() {
-         if (++leader === userList.length) {
+         if (++leader === userList.length)
             leader = 0;
-         }
          
          this.verifyState();
       };
@@ -339,6 +338,7 @@ module.exports = {
       this.getRoundLeader = function() {
          return userList[leader].name;
       };
+      
       
       this.getRoundNumber = function() {
          return roundNumber;

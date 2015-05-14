@@ -7,8 +7,6 @@ var thisUser = null;
 var thisRole = null;
 var thisTeammates = null;
 
-var onMission = false;
-
 var isLeader = false;
 
 /* Set up onclick listeners */
@@ -145,7 +143,7 @@ socket.on('team_vote_result', function(res, team) {
    isLeader = false;
    if (res) {
       setHeaderText('Vote passed, Wait for Mission...');
-      onMission = false;
+      var onMission = false;
       
       team.forEach(function(value, index) {
          if (value === thisUser)
