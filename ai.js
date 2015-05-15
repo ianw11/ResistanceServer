@@ -227,6 +227,7 @@ module.exports = {
 		   if(self.role === "SPY") {
             if (game.getVoteNumber() === 4) {
                // If the vote counter is at 4, spies win if the vote fails
+			   //this probably isn't a good choice because there are more resistance so they will always pass the last vote and give away the spies
                worthy = false;
             } else {
                // TODO Add something about if a known spy is on the team
@@ -273,7 +274,7 @@ module.exports = {
                      if (mate === mission)
                         numTeammatesOnMission++;
                   });
-               });
+               });//numTeammatesOnMission is never used
                
                if (game.getNumSpyWins() === 2) {
                   // First, if the spies already have 2 wins
@@ -294,7 +295,7 @@ module.exports = {
                      case 2:
                      case 3:
                      case 4:
-                     case 5: // Always fail on Round 5
+                     case 5: // Always fail on Round 5. dont rounds 2-4 also fail?
                         worthy = false;
                      default:
                         break;
