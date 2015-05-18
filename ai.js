@@ -40,7 +40,7 @@ var PlayerWeight = function(name, autoTrust) {
          return true;
       }
       
-      if (this.trust > .65)
+      if (this.trust > .7)
          return true;
       else if (this.trust < .35)
          return false;
@@ -163,31 +163,47 @@ module.exports = {
       
       This is where the main team selection logic goes */
       this.socket.on('leader', function(userList, numberOfAgents) {
-         players = game.getUsers();
          var team_list = [];
 
+         // Always add self to a mission
          var place = -1;
-         players.forEach(function(val, ndx) {
+         userList.forEach(function(val, ndx) {
             if (val.name === self.NAME) {
                place = ndx;
             }
          });
+         team_list[0] = userList[place].name;
          
-         team_list[0] = players[place].name;
          var q = 0;
-         if(self.role === "SPY") {
+         if(self.role === "SPY") { // Spy choices
             while(team_list.length != numberOfAgents) {
-               if(q === place){q++}
-               team_list[team_list.length] = players[q].name;
+               if(q === place){q++;}
+               team_list[team_list.length] = userList[q].name;
                q++;
             }
-         } else {
-            while(team_list.length != numberOfAgents) {
-               if(q === place){q++}
-               //need to add people to the "friends" list and choose them
-               team_list[team_list.length] = players[q].name;
+         } else { // Resistance choices
+         
+            var undesirable = [];
+            while(team_list.length != numberOfAgents && q < userList.length) {
+               if(q === place){q++;}
+               
+               var curr = userList[q].name;
+               if (self.playerWeights[curr].choose()) {
+                  team_list[team_list.length] = curr;
+               } else {
+                  undesirable[undesirable.length] = curr;
+               }
+               
                q++;
-            } 
+            }
+            
+            // If the chosen list is too short (ie the computer doesn't trust
+            // a lot of people), then just start filling
+            q = 0;
+            while (team_list.length < numberOfAgents) {
+               team_list[team_list.length] = undesirable[q++];
+            }
+            
          }
          
          

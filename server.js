@@ -155,7 +155,9 @@ io.on('connection', function(socket) {
       
       socket.sendChat(game.getNumUsers() + ' players -- ' + game.getNumResistance() + ' resistance and ' + game.getNumSpies() + ' spies');
       
-      socket.advanceRound();
+      setTimeout(function(){
+         socket.advanceRound();
+      }, 500);
    });
    
    /**********************/
@@ -219,6 +221,8 @@ io.on('connection', function(socket) {
          socket.advanceRound();
       }
    });
+   
+   /**********************/
    
    socket.newLeader = function() {
       var leader = game.getRoundLeader();
