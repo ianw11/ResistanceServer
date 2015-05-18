@@ -38,7 +38,6 @@ module.exports = {
    
       this.newGame = function() {
          isStarted = true;
-         leader = 0;
          userList = shuffle(userList);
          
          /* This loop walks through the user list and assigns a

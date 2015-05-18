@@ -124,6 +124,7 @@ io.on('connection', function(socket) {
       connectedUsers--;
       if (connectedUsers == connected_ai.length && game != null) {
          console.log("No more users, closing game");
+         console.log("");
          socket.sendChat('ACCEPTING PLAYERS');
          game = null;
          team_list = null;

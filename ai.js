@@ -35,6 +35,14 @@ var PlayerWeight = function(name, autoTrust) {
       
    };
    
+   this.updateLeaderTrust = function(didPass) {
+      if (didPass) {
+         
+      } else {
+         this.trust -= .1;
+      }
+   }
+   
    this.choose = function() {
       if (autoTrust) {
          return true;
@@ -61,7 +69,9 @@ module.exports = {
       this.id = id;
       this.game = game;
       
-      /* This code deletes the existance of 'socket.io-client' from
+      /***********************************************************************/
+      
+      /* This code deletes the existence of 'socket.io-client' from
       Node.js' require cache.
       
       The problem we ran into was that 'require' loads all code once and never
@@ -89,10 +99,11 @@ module.exports = {
       // Let the server know that this AI exists
       this.socket.emit('add_name', this.NAME);
       
+      /***********************************************************************/
+      
       // A self variable is needed to help with scope
       // issues later on in the socket code
       var self = this;
-      
       
       // Game logic member variables
       this.role = "";
@@ -103,9 +114,12 @@ module.exports = {
       this.playerWeights = {};
       
       this.lastTeam = [];
+      this.lastCaptain = null;
       
       this.roundNum = -1;
       this.voteNum = -1;
+      
+      
       
       
       this.socket.on('accepted_user', function() {
@@ -126,9 +140,8 @@ module.exports = {
       this.socket.on('role', function(role, spies) {
          self.role = role;
          
+         // Get the player list to assign trust levels
          var players = game.getUsers();
-         
-         
          if (role === 'SPY') {
             self.teammates = spies;
             
@@ -147,8 +160,6 @@ module.exports = {
             })
          }
          
-         
-         
       });
       
       
@@ -158,10 +169,9 @@ module.exports = {
          // Code to set self.roundNum or self.voteNum could go here...
       });
       
-      /* When the AI is the leader, it must select <numberOfAgents> from
-      <userList> to go on a mission.
-      
-      This is where the main team selection logic goes */
+      /**
+       * Choose people to go on a mission
+       */
       this.socket.on('leader', function(userList, numberOfAgents) {
          var team_list = [];
 
@@ -173,28 +183,27 @@ module.exports = {
             }
          });
          team_list[0] = userList[place].name;
+         userList.splice(place, 1); // Removes self from the list
          
+         // Now chooses (numberOfAgents - 1) from the rest of the options
          var q = 0;
-         if(self.role === "SPY") { // Spy choices for mission
-            while(team_list.length != numberOfAgents) {
-               if(q === place) {
+         if (self.role === "SPY") { // Spy choices for mission
+            while(team_list.length < numberOfAgents) {
+               
+               // This loop promises that only 1 spy will be put on a mission
+               // when a spy is the captain
+               if (_.contains(self.teammates, userList[q].name)) {
                   q++;
-                  
-                  if (q === team_list.length)
-                     q = 0;
+                  continue;
                }
+               
                team_list[team_list.length] = userList[q].name;
                q++;
             }
          } else { // Resistance choices
          
             var undesirable = [];
-            while(team_list.length != numberOfAgents && q < userList.length) {
-               if(q === place){
-                  q++;
-                  if (q === userList.length)
-                     q = 0;
-               }
+            while(team_list.length < numberOfAgents && q < userList.length) {
                
                var curr = userList[q].name;
                if (self.playerWeights[curr].choose()) {
@@ -219,6 +228,10 @@ module.exports = {
          self.socket.emit('team_list', team_list);
       });
       
+      
+      /**
+       * Vote on whether the team seems legit
+       */
       this.socket.on('vote_team', function(team) {
          
 		   var isOnTeam = false;
@@ -251,11 +264,16 @@ module.exports = {
        
 		   if(self.role === "SPY") {
             if (game.getVoteNumber() === 4) {
-               // If the vote counter is at 4, spies win if the vote fails
-			   //this probably isn't a good choice because there are more resistance so they will always pass the last vote and give away the spies
+               // If the vote counter is at 4, spies WIN if the vote fails.
                worthy = false;
             } else {
-               // TODO Add something about if a known spy is on the team
+               var numSpies = numSpiesOnMission(team, self.teammates);
+               
+               if (game.getNumResistanceWins() === 2) {
+                  if (numSpies === 0) {
+                     worthy = false;
+                  }
+               }
                worthy = true;
             }
          }
@@ -266,15 +284,19 @@ module.exports = {
          self.socket.emit('vote', vote);
       });
       
+      
+      /**
+       * If this AI is on a mission, choose the result
+       */
       this.socket.on('team_vote_result', function(res, team) {
-         // If this AI is on the team (ie team[i] is 'AI <id>')
-         // then it may vote on the mission
-         // Otherwise, nothing
          
+         // If the team wasn't voted on, don't even bother
          if (!res)
             return;
          
+         // Save data to process later (to update trust levels)
          self.lastTeam = team;
+         self.lastCaptain = game.getRoundLeader();
          
          // Determine if this AI is on the mission
          var isOnMission = false;
@@ -284,64 +306,88 @@ module.exports = {
             }
          });
          
-         // Then if the AI is on the mission...
-         if (isOnMission) {
-            var worthy = true; // Resistance must always vote yes
+         // If this AI isn't on the mission, it's done
+         if (!isOnMission)
+            return;
+         
+         
+         var worthy = true; // Resistance must always vote yes
+         
+         // Only spies need to decide
+         if (self.role === "SPY") {
             
-            // Only spies need to decide
-            if (self.role === "SPY") {
-               
-               // First, count the number of teammates on this mission
-               // This DOES count self
-               var numTeammatesOnMission = 0;
-               self.teammates.forEach(function(mate) {
-                  team.forEach(function(mission) {
-                     if (mate === mission)
-                        numTeammatesOnMission++;
-                  });
-               });//numTeammatesOnMission is never used
-               
-               if (game.getNumSpyWins() === 2) {
-                  // First, if the spies already have 2 wins
-                  // then auto fail the mission
-                  worthy = false;
-               } if (game.getNumResistanceWins() === 2) {
-                  // If the Resistance already has 2 wins
-                  // Every mission must fail
-                  worthy = false;
-               } else {
-                  // Depending on the round number, different logic can apply
-                  switch(game.getRoundNumber()) {
-                     case 1:
-                        if (game.getNumberOfAgents() > 2) {
-                           worthy = false;
-                        }
-                        break;
-                     case 2:
-                     case 3:
-                     case 4:
-                     case 5: // Always fail on Round 5. dont rounds 2-4 also fail?
+            // First, count the number of teammates on this mission
+            // This DOES count self
+            var numTeammatesOnMission = 0;
+            self.teammates.forEach(function(mate) {
+               team.forEach(function(mission) {
+                  if (mate === mission)
+                     numTeammatesOnMission++;
+               });
+            });//numTeammatesOnMission is never used
+            
+            if (game.getNumSpyWins() === 2) {
+               // First, if the spies already have 2 wins then auto-fail
+               worthy = false;
+            } if (game.getNumResistanceWins() === 2) {
+               // If the Resistance already has 2 wins then auto-fail
+               worthy = false;
+            } else {
+               // Depending on the round number, different logic can apply
+               switch(game.getRoundNumber()) {
+                  case 1:
+                     if (game.getNumberOfAgents() > 2) {
                         worthy = false;
-                     default:
-                        break;
-                  }
+                     }
+                     break;
+                  case 2: // Just something to give the games a little bit of randomness
+                     var rand = Math.random();
+                     if (rand > .2)
+                        worthy = false;
+                     break;
+                  case 3:
+                  case 4:
+                  case 5: // Always fail on Round 5
+                     worthy = false;
+                  default:
+                     break;
                }
             }
-            
-            
-            // Finally emit the mission result
-            var vote = worthy ? 1 : 0;
-            self.socket.emit('mission', vote);
          }
+         
+         
+         // Finally emit the mission result
+         var vote = worthy ? 1 : 0;
+         self.socket.emit('mission', vote);
          
       });
       
       
+      /**
+       * Update the AI's trust levels (if Resistance)
+       */
       this.socket.on('AI_mission', function(numNoVotes, numAgents) {
-         // The AI need to update the team's trust levels
+         if (self.role === 'SPY')
+            return;
+         
+         
+         if (self.lastCaptain !== self.NAME) {
+            self.playerWeights[self.lastCaptain].updateLeaderTrust(numNoVotes > 0);
+         }
+         
+         
+         var wasOnMission = _.contains(self.lastTeam, self.NAME);
+         
          self.lastTeam.forEach(function(name) {
-            self.playerWeights[name].updateTrust(numAgents, numNoVotes);
+            
+            if (wasOnMission)
+               self.playerWeights[name].updateTrust(numAgents - 1, numNoVotes);
+            else
+               self.playerWeights[name].updateTrust(numAgents, numNoVotes);
+            
          });
+         
+         
       });
       
       
@@ -353,3 +399,17 @@ module.exports = {
       
    }
 };
+
+
+var numSpiesOnMission = function(_team_list, _spy_list) {
+   var num = 0;
+   
+   _spy_list.forEach(function(spy_name) {
+      _team_list.forEach(function(team_name) {
+         if (spy_name === team_name)
+            ++num;
+      });
+   });
+   
+   return num;
+}
