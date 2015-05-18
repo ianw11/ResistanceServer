@@ -175,9 +175,14 @@ module.exports = {
          team_list[0] = userList[place].name;
          
          var q = 0;
-         if(self.role === "SPY") { // Spy choices
+         if(self.role === "SPY") { // Spy choices for mission
             while(team_list.length != numberOfAgents) {
-               if(q === place){q++;}
+               if(q === place) {
+                  q++;
+                  
+                  if (q === team_list.length)
+                     q = 0;
+               }
                team_list[team_list.length] = userList[q].name;
                q++;
             }
@@ -185,7 +190,11 @@ module.exports = {
          
             var undesirable = [];
             while(team_list.length != numberOfAgents && q < userList.length) {
-               if(q === place){q++;}
+               if(q === place){
+                  q++;
+                  if (q === userList.length)
+                     q = 0;
+               }
                
                var curr = userList[q].name;
                if (self.playerWeights[curr].choose()) {

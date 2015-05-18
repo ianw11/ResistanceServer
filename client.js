@@ -27,6 +27,8 @@ window.onload = function() {
    $('#mission_vote_pass')[0].onclick = voteMissionPass;
    $('#mission_vote_fail')[0].onclick = voteMissionFail;
    
+   $('#restartButton')[0].onclick = function() { history.go(0); }
+   
    //var toHide = $('.myhidden');
    $('.myhidden').each(function(index) {
       $(this).toggle(0);
@@ -183,6 +185,7 @@ socket.on('victory', function(side) {
    
    swapVisibility($('#emptyDiv'));
    swapVisibility($('#scoreBar'));
+   swapVisibility($('#restartButton'));
 });
 
 

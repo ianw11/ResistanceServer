@@ -229,8 +229,8 @@ io.on('connection', function(socket) {
       user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
       io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
       
-      socket.sendChat('--------------------------------');
-      socket.sendChat('--------------------------------');
+      socket.sendChat('****************************');
+      //socket.sendChat('--------------------------------');
       socket.sendChat('New Captain: ' + leader);
       socket.sendChat('--------------------------------');
    };
@@ -259,8 +259,9 @@ io.on('connection', function(socket) {
       io.emit('victory', team);
       var users = game.getUsers();
       
-      var userText = "|| ";
+      socket.sendChat('***---***---***---');
       
+      var userText = "";
       users.forEach(function(val) {
          userText += val.name + ' is ' + val.role + ' || ';
       });

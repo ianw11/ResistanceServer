@@ -73,7 +73,7 @@
       <ul id='teammates'></ul>
    </div>
    <div id='container'>
-      <button class='restart myhidden' id='restartButton'>Restart</button>
+      <button class='restart myhidden mycenter' id='restartButton'><h1>Restart</h1></button>
       
       <div class='myhidden' id='emptyDiv'>
       </div>
@@ -82,7 +82,7 @@
       <div class='mycenter' id='index'>
          <h1>Enter Name</h1>
          <form id='nameInputForm'>
-            <input id="nameInput" autocomplete="off" /><button>Enter Game!</button>
+            <input id="nameInput" autocomplete="off" autofocus /><button>Enter Game!</button>
          </form>
       </div>
    
@@ -107,9 +107,9 @@
          <h1 id='currLeader'></h1>
          <p>
          <div id='leaderInfo' class='myhidden'>
+            <h3 id='neededNumberOfPeople'></h3>
             <select multiple='multiple' id='leader_select' name='my-select[]' >
             </select>
-            <p id='neededNumberOfPeople'></p>
             <button id='selectTeamButton'>Accept Team</button>
          </div>
       </div>
