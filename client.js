@@ -29,7 +29,7 @@ window.onload = function() {
    
    $('#restartButton')[0].onclick = function() { history.go(0); }
    
-   //var toHide = $('.myhidden');
+   // Hide all divs that are not yet in use
    $('.myhidden').each(function(index) {
       $(this).toggle(0);
    });

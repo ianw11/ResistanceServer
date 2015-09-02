@@ -14,7 +14,6 @@ module.exports = {
       var userList = [];
       
       var spies = [];
-      var isStarted = false;
       
       var roundNumber = 0;
       var numSpyWins = 0;
@@ -33,8 +32,6 @@ module.exports = {
       var missionPassed = true;
       var numFailed = 0;
       
-      
-      console.log('New game object instantiated');
    
       this.newGame = function() {
          isStarted = true;
@@ -274,16 +271,6 @@ module.exports = {
          userList[userList.length] = p;
       };
       
-      this.dropUser = function(name) {
-         var index = -1;
-         userList.forEach(function(val, ndx) {
-            if (val.name === name)
-               index = ndx;
-         });
-         //var index = userList.indexOf(name);
-         userList.splice(index, 1);
-      };
-      
       this.getNumUsers = function() {
          return userList.length;
       };
@@ -325,10 +312,6 @@ module.exports = {
          
          return res;
       }
-      
-      this.isGameStarted = function() {
-         return isStarted;
-      };
       
       this.getSpies = function() {
          return spies;

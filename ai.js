@@ -61,9 +61,9 @@ var PlayerWeight = function(name, autoTrust) {
 
 
 module.exports = {
-   AI: function(id, game) {
+   AI: function(id, game, room_id) {
       
-      this.NAME = 'AI ' + id;
+      //this.NAME = name;
       
       // Passed in parameters
       this.id = id;
@@ -97,7 +97,7 @@ module.exports = {
       var io = require('socket.io-client');
       this.socket = io.connect('http://localhost:3000');
       // Let the server know that this AI exists
-      this.socket.emit('add_name', this.NAME);
+      this.socket.emit('ai', room_id, id);
       
       /***********************************************************************/
       
@@ -132,12 +132,10 @@ module.exports = {
          // The AI doesn't care about dropped users
       });
       
-      /* When the game starts, each AI must request its role */
-      this.socket.on('game_started', function() {
-         self.socket.emit('send_role', self.NAME);
-      });
+      
       /* Here, the AI saves it's role and any teammates */
-      this.socket.on('role', function(role, spies) {
+      this.socket.on('role', function(name, role, spies) {
+         
          self.role = role;
          
          // Get the player list to assign trust levels
@@ -224,7 +222,6 @@ module.exports = {
             
          }
          
-         
          self.socket.emit('team_list', team_list);
       });
       
@@ -262,7 +259,7 @@ module.exports = {
             }
          }
        
-		   if(self.role === "SPY") {
+		   if (self.role === "SPY") {
             if (game.getVoteNumber() === 4) {
                // If the vote counter is at 4, spies WIN if the vote fails.
                worthy = false;

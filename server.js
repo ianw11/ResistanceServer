@@ -1,5 +1,4 @@
-var _game = require('./game');
-var _ai = require('./ai');
+var Room = require('./Room');
 
 /* Here are the 'node' require statements */
 // Express initializes app to be a function handler
@@ -8,41 +7,50 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-/************GLOBAL VARIABLES****************/
-var REQUIRE_FIVE = true;
-/********************************************/
+/**********
+socket.room -- the player is in
+socket.name -- the name of the user
+socket.uid -- unique ID of a socket
+socket.ai -- whether this is ai or not
+socket.inGame -- whether this connection is in a game
+**********/
 
-var game = null;
-var connectedUsers = 0;
+var room_id = -1;
 
-// user_list is an object with key-value pairs
-// in the form of <username>:<socket>
-var user_list = null;
+// Array to hold Rooms waiting for players
+var open_rooms = [];
+// Array to hold active Rooms for AI to connect to
+var active_rooms = [];
 
-var team_list = null;
-
-
-
-/* Code to allow AI to take part in the game too */
-var connected_ai = [];
-
-var add_ai = function() {
-   connected_ai[connected_ai.length] = new _ai.AI(connected_ai.length, game);
-};
-
-
-/* END OF AI SECTION */
+// Counter to identify connections
+var playerUID = -1;
 
 
 // We define a route handler '/' that gets called when we hit the website home
 app.get('/', function(req, res) {
-   res.sendFile(__dirname + '/resistance_index.html');
+   //res.sendFile(__dirname + '/resistance_index.html');
+   res.sendFile(__dirname + '/index.html');
+});
+app.get('/index.js', function(req, res) {
+   res.sendFile(__dirname + '/index.js');
 });
 
-// Send the client javascript code too!
-app.get('/client.js', function(req, res) {
-   res.sendFile(__dirname + '/client.js');
+// Sends the client the latest and greatest list of games to play
+app.get('/Games.json', function(req, res) {
+   res.sendFile(__dirname + '/Games.json');
 });
+
+app.get('/resistance.html', function(req, res) {
+   res.sendFile(__dirname + '/resistance.html');
+});
+app.get('/resistance.js', function(req, res) {
+   res.sendFile(__dirname + '/resistance.js');
+});
+app.get('/avalon.html', function(req, res) {
+   res.sendFile(__dirname + '/avalon.html');
+});
+
+
 
 /* MultiSelect code */
 app.get('/multi_select', function (req, res) {
@@ -54,236 +62,165 @@ app.get('/multi_select.js', function(req, res) {
 app.get('/img/switch.png', function(req, res) {
    res.sendFile(__dirname + '/multi_select/img/switch.png');
 });
+/* End of MultiSelect code */
+
+
+function verifyRoom(room) {
+   if (room.numPlayers() === 0) {
+      var ndx = -1;
+      for (var i = 0; i < open_rooms.length && ndx === -1; ++i) {
+         if (open_rooms[i].id === room.id)
+            ndx = i;
+      }
+      if (ndx > -1) {
+         open_rooms.splice(ndx, 1);
+      }
+   }
+};
+
+function sendChat(chat) {
+   io.emit('chat_message', chat);
+};
+
+/* Begin definition of socket code */
 
 io.on('connection', function(socket) {
+   socket.uid = ++playerUID;
+   socket.inGame = false;
+   socket.ai = false;
    
-   // connect
-   socket.on('add_name', function(name) {
+   socket.on('name', function(name) {
+      socket.name = name;
+   });
+   
+   socket.on('get_open_rooms', function() {
+      var rms = [];
       
-      // If no game object exists, create a new one
-      // Also resets user_list
-      if (game == null) {
-         console.log("Creating new game");
-         game = new _game.Game();
-         user_list = {};
+      for (var i = 0; i < open_rooms.length; ++i) {
+         rms[rms.length] = open_rooms[i].toObject();
       }
       
-      // If the game has already started, don't allow
-      // the user to connect.
-      // This can be replaced later on by allowing multiple
-      // instances of games at one time
-      if (game.isGameStarted()) {
-         socket.emit('_error', "Game has already started");
+      socket.emit('open_rooms', rms);
+   });
+   
+   socket.on('open_room', function(game_obj) {
+      var room = new Room(++room_id, socket.name, game_obj);
+      open_rooms[open_rooms.length] = room;
+      
+      room.connect(socket);
+      socket.room = room
+      
+      socket.emit('in_room', room.toObject(), true);
+   });
+   
+   socket.on('join_room', function(room_id) {
+      var room = null;
+      for (var i = 0; i < open_rooms.length; ++i) {
+         if (open_rooms[i].id === room_id)
+            room = open_rooms[i];
+      }
+      
+      if (room === null) {
+         socket.emit('notify', "Room has already closed.  Please choose another");
          return;
       }
       
-      if (connectedUsers >= 10) {
-         socket.emit('_error', "Game has 10 people already");
+      if (!room.connect(socket)) {
+         socket.emit('notify', 'Room is full. Please choose another');
          return;
       }
       
+      socket.room = room;
       
-      // Increment the connected users
-      connectedUsers++;
-      
-      
-      socket.emit('accepted_user');
-      
-      var users = game.getUsers();
-      for (var i = 0; i < users.length; ++i) {
-         // Send all users to the new connection
-         socket.emit('new_user', users[i].name);
-      }
-      // Send the new user to all users
-      io.emit('new_user', name);
-      
-      // Tie the socket to the user
-      socket['username'] = name;
-      user_list[name] = socket;
-      
-      game.addUser(name);
+      socket.emit('in_room', room.toObject(), false);
    });
    
-   socket.on('add_ai', add_ai);
-   
-   // disconnect
-   socket.on('disconnect', function() {
+   socket.on('leaving_room', function() {
+      socket.room.disconnect(socket);
       
-      // If the user never actually entered their name, just exit this function
-      if (socket['username'] == null) {
-         return;
-      }
+      verifyRoom(socket.room);
       
-      socket.sendChat(socket['username'] + " has refreshed/disconnected");
-      
-      game.dropUser(socket['username']);
-      console.log(socket['username'] + " has disconnected");
-      io.emit('dropped_user', socket['username']);
-      
-      // Decrement connectedUsers and if 0, drop the game instance
-      connectedUsers--;
-      if (connectedUsers == connected_ai.length && game != null) {
-         console.log("No more users, closing game");
-         console.log("");
-         socket.sendChat('ACCEPTING PLAYERS');
-         game = null;
-         team_list = null;
-         
-         connected_ai.forEach(function(val, ndx) {
-            val.terminate();
-         });
-         connected_ai = [];
-         connectedUsers = 0;
-      }
-   });
-
-   // start_game
-   socket.on('start_game', function() {
-      
-      if (game.isGameStarted()) {
-         return;
-      }
-      
-      
-      if (REQUIRE_FIVE && (game.getNumUsers() < 5 || game.getNumUsers() > 10)) {
-         socket.emit('violation', "There must be between 5 and 10 people");
-         return;
-      }
-      
-      game.newGame();
-      
-      io.emit('game_started');
-      
-      socket.sendChat(game.getNumUsers() + ' players -- ' + game.getNumResistance() + ' resistance and ' + game.getNumSpies() + ' spies');
-      
-      setTimeout(function(){
-         socket.advanceRound();
-      }, 500);
+      socket.room = null;
    });
    
-   /**********************/
-   // send_role
-   socket.on('send_role', function(name) {
-      var role = game.getRole(name);
-      if (role === 'SPY') {
-         socket.emit('role', role, game.getSpies());
-      } else {
-         socket.emit('role', role);
-      }
-   });
    
-   // team_list (submitting the mission team list)
-   socket.on('team_list', function(team) {
-      if (game.correctNumberOnTeam(team.length)) {
-         io.emit('vote_team', team);
-         team_list = team;
-      } else {
-         socket.emit('violation', "Wrong number of people on team");
-      }
-   });
-   
-   // vote
-   socket.on('vote', function(choice) {
-      // Submit the current vote
-      if (game.teamVote(choice)) {
-         
-         socket.sendChat(game.teamVoteStats() + " YES votes out of " + game.getNumUsers());
-         
-         // If everybody has voted, move on to the result analysis
-         var result = game.getVoteResult();
-         io.emit('team_vote_result', result, team_list);
-         if (result) {
-            socket.sendChat('Mission: ' + team_list);
-         } else {
-            socket.advanceVote();
+   socket.on('ready_to_start', function(room_id) {
+      var room = null;
+      var room_ndx = -1;
+      
+      // Find the room that's ready
+      open_rooms.forEach(function(r, ndx) {
+         if (r.id === room_id) {
+            room = r;
+            room_ndx = ndx;
          }
-      }
-   });
-   
-   // mission
-   socket.on('mission', function(res) {
-      // Submit the vote for the current mission
-      if (game.mission(res)) {
-         
-         socket.sendChat(game.missionVoteStats() + ' FAIL votes out of ' + game.getNumberOfAgents());
-         io.emit('AI_mission', game.missionVoteStats(), game.getNumberOfAgents());
-         
-         // Once everybody has voted, get results
-         var result = game.missionResult();
-         
-         var winningTeam = game.getWinner();
-         if (winningTeam !== -1) {
-            socket.victory(winningTeam);
-            return;
-         }
-         
-         io.emit('mission_result', result);
-         
-         socket.advanceRound();
-      }
-   });
-   
-   /**********************/
-   
-   socket.newLeader = function() {
-      var leader = game.getRoundLeader();
-      user_list[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
-      io.emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
-      
-      socket.sendChat('****************************');
-      //socket.sendChat('--------------------------------');
-      socket.sendChat('New Captain: ' + leader);
-      socket.sendChat('--------------------------------');
-   };
-   
-   socket.advanceVote = function() {
-      if (game.nextVote()) {
-         socket.victory(0);
-         return;
-      }
-      
-      socket.newLeader();
-   };
-   
-   socket.advanceRound = function() {
-      if (game.nextRound()) {
-         socket.victory(game.getWinner());
-         return;
-      }
-      
-      socket.newLeader();
-      io.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
-   };
-   
-   
-   socket.victory = function(team) {
-      io.emit('victory', team);
-      var users = game.getUsers();
-      
-      socket.sendChat('***---***---***---');
-      
-      var userText = "";
-      users.forEach(function(val) {
-         userText += val.name + ' is ' + val.role + ' || ';
       });
       
-      socket.sendChat(userText);
-   };
-   
-   // To update the client's scores
-   socket.on('update_scores', function() {
-      socket.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
+      // Verify it's ready
+      var isReady = room.verifyAndLaunch();
+      
+      // If it's ready, remove it from 'open' and move it to 'active'
+      if (isReady) {
+         open_rooms.splice(room_ndx, 1);
+         
+         active_rooms[active_rooms.length] = room;
+         
+         // Mark each socket as 'in game'
+         room.connectedPlayers.forEach(function(sock) {
+            sock.inGame = true;
+         });
+         
+         room.takeTheReins();
+      }
    });
-   
    
    socket.on('chat_message', function(msg) {
-      io.emit('chat_message', msg);
+      sendChat(msg);
    });
    
    
-   socket.sendChat = function(msg) {
-      io.emit('chat_message', 'GAME-> ' + msg);
-   };
+   socket.on('disconnect', function() {
+      if (socket.ai) {
+         return;
+      }
+      
+      
+      if (socket.inGame === true) {
+         socket.room.closeRunningGame();
+         
+         var ndx = -1;
+         for (var i = 0; i < active_rooms.length && ndx === -1; ++i) {
+            if (active_rooms[i].id === socket.room.id)
+               ndx = i;
+         }
+         if (ndx > -1) {
+            active_rooms.splice(ndx, 1);
+         }
+         
+         return;
+      }
+      
+      if (socket.room !== undefined && socket.room !== null) {
+         socket.room.disconnect(socket);
+         
+         verifyRoom(socket.room);
+      }
+   });
+   
+   
+   socket.on('ai', function(room_id, ai_id) {
+      socket.ai = true;
+      
+      var room = null;
+      
+      // Find the room
+      active_rooms.forEach(function(r) {
+         if (r.id === room_id)
+            room = r;
+      });
+      
+      room.addAI(socket, ai_id);
+   });
    
 });
 

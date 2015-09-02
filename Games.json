@@ -1,0 +1,47 @@
+{
+   "games": [
+      {
+         "name": "The Resistance",
+         "url": "resistance.html",
+         "server_url": "resistance_server.js",
+         "modules": [],
+         "fake_data": [
+            {
+               "name": "Hunter (HI)",
+               "val": "HUN"
+            },
+            {
+               "name": "Inquisitor (HI)",
+               "val": "INQ"
+            },
+            {
+               "name": "Reverser (HI)",
+               "val": "REV"
+            },
+            {
+               "name": "Assassin (HA)",
+               "val": "ASS"
+            },
+            {
+               "name": "Trapper (HA)",
+               "val": "TRP"
+            },
+            {
+               "name": "Defector 1 (HA)",
+               "val": "DEF1"
+            },
+            {
+               "name": "Defector 2 (HA)",
+               "val": "DEF2"
+            }
+         ]
+      },
+      {
+         "name": "Avalon (WIP)",
+         "url": "avalon.html",
+         "server_url": "avalon_server.js",
+         "modules": [
+         ]
+      }
+]
+}

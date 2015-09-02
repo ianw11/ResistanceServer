@@ -1,0 +1,77 @@
+<style>
+   button { background: rgb(225, 250, 0); }
+   
+   .flex { display: flex; flex-direction: column; }
+   
+   .mycenter { margin: auto; }
+   
+   .header {   text-align:center;
+               background: rgb(43, 186, 184);
+            }
+   
+   #container { display: flex;
+                background: rgb(186, 43, 45); }
+   
+   
+   
+   
+   
+   
+   
+</style>
+<link href='multi_select' media='screen' rel='stylesheet' type='text/css'>
+
+<div>
+
+   <div class='flex'>
+      <div class='header mycenter'>
+         <h1 id='status'>THE RESISTANCE</h1>
+         <h1 id='scoreBar'></button>
+         <h1 id='roleElem'></h1>
+         <h2 id='roundAndVote'></h2>
+         <p>
+         Your Teammates:
+         <ul id='teammates'></ul>
+      </div>
+      <div id='container'>
+         <div class='r_hidden' id='emptyDiv'>
+         </div>
+         
+         
+         <div id='startDiv'>Start Div</div>
+         
+         
+         <div class='mycenter r_hidden' id='role_screen'>
+            <h1 id='currLeader'></h1>
+            <p>
+            <div id='leaderInfo' class='r_hidden'>
+               <h3 id='neededNumberOfPeople'></h3>
+               <select multiple='multiple' id='leader_select' name='my-select[]' >
+               </select>
+               <button id='selectTeamButton'>Accept Team</button>
+            </div>
+         </div>
+         
+         <div class='mycenter r_hidden' id='voteOnTeam'>
+            <h1>Vote on this team</h1>
+            <ul id='team_list'></ul>
+            <div class='horizontal'>
+               <button id='team_vote_yes'>Yes</button>
+               <button id='team_vote_no'>No</button>
+            </div>
+         </div>
+         
+         <div class='mycenter r_hidden' id='mission'>
+            <h1>WAITING FOR MISSION...</h1>
+            <div class='horizontal r_hidden' id='on_mission'>
+               <button id='mission_vote_pass'>Pass Mission</button>
+               <button id='mission_vote_fail' class='r_hidden'>Fail Mission</button>
+            </div>
+         </div>
+      
+      </div>
+   </div>
+</div>
+
+<script src='/multi_select.js' type='text/javascript'></script>
+<script type='text/javascript' src='./resistance.js'></script>
