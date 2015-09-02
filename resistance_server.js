@@ -12,6 +12,9 @@ var numPlayers = -1;
 
 var team_list = null;
 
+var self = this;
+this.sendChat = null;
+
 function addAI(socket, ai_id) {
    socket.name = 'Faker ' + (ai_id);
    game.addUser(socket.name);
@@ -29,7 +32,8 @@ function closeAI() {
    });
 };
 
-function init_server(socket_arr, room_id, num_ai, totalP) {
+function init_server(socket_arr, room_id, num_ai, totalP, sendChat) {
+   self.sendChat = sendChat;
    game = new _game.Game();
    
    numPlayers = totalP;
@@ -180,7 +184,7 @@ function victory(team) {
 };
 
 function sendGameChat(msg) {
-   sendChat('GAME-> ' + msg);
+   self.sendChat('GAME-> ' + msg);
 };
 
 

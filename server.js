@@ -78,10 +78,6 @@ function verifyRoom(room) {
    }
 };
 
-function sendChat(chat) {
-   io.emit('chat_message', chat);
-};
-
 /* Begin definition of socket code */
 
 io.on('connection', function(socket) {
@@ -172,10 +168,6 @@ io.on('connection', function(socket) {
          
          room.takeTheReins();
       }
-   });
-   
-   socket.on('chat_message', function(msg) {
-      sendChat(msg);
    });
    
    

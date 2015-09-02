@@ -44,6 +44,12 @@ Room.prototype.addAI = function(socket, ai_id) {
    this.externalCode.addAI(socket, ai_id);
 };
 
+Room.prototype.sendChat = function(msg) {
+   connectedPlayers.forEach(function(socket) {
+      socket.emit('chat_message', msg);
+   });
+};
+
 Room.prototype.takeTheReins = function() {
    /** Section to reload games **/
    var toDel = [];
@@ -62,7 +68,7 @@ Room.prototype.takeTheReins = function() {
    
    this.active = true;
    
-   this.externalCode.init_server(this.connectedPlayers, this.id, this.numAI, this.targetPlayers);
+   this.externalCode.init_server(this.connectedPlayers, this.id, this.numAI, this.targetPlayers, this.sendChat);
    
    this.connectedPlayers.forEach(function(socket) {
       socket.emit('start_game', self.url);
