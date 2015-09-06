@@ -63,7 +63,7 @@ $('#nameInputForm').submit(function() {
    if (name === undefined || name === '')
       return false;
    
-   this._name = name;
+   _name = name;
    
    socket.emit('name', name);
    
@@ -359,10 +359,11 @@ var leaveRoom = function() {
 };
 
 socket.on('room_closed', function(active) {
-   console.log(active);
    if (active) {
       alert("Player disconnected, please refresh");
       _swapVisibility($('#_blank'));
+      
+      $('#chatDiv').toggle(0);
       
       return;
    }
@@ -407,7 +408,7 @@ function sendChat() {
    if ($('#m')[0].value.length === 0)
       return false;
    
-   socket.emit('chat_message', this._name + '-> '  + $('#m')[0].value);
+   socket.emit('chat_message', _name + '-> '  + $('#m')[0].value);
    
    $('#m')[0].value = '';
    

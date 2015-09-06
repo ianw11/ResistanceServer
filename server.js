@@ -40,6 +40,7 @@ io.on('connection', function(socket) {
       socket.name = name;
    });
    
+   
    /** Create room */
    
    /* When the client wants to create a game, they open a room for others to join */
@@ -47,13 +48,14 @@ io.on('connection', function(socket) {
       var roomId = room_id++;
       
       var room = new Room(roomId, socket.name, game_obj);
-      rooms[] = roomId;
+      rooms[roomId] = room;
       
       room.connect(socket);
       socket.room = room
       
       socket.emit('in_room', room.toObject(), true);
    });
+   
    
    /** Join room */
    
@@ -91,6 +93,7 @@ io.on('connection', function(socket) {
       socket.emit('in_room', room.toObject(), false);
    });
    
+   
    /** Leave room */
    
    /* When a client leaves a room. Handles the owner leaving too */
@@ -102,6 +105,7 @@ io.on('connection', function(socket) {
       socket.room = null;
    });
    
+   
    /** Start room */
    
    /* When the game owner wants to start the game */
@@ -109,6 +113,7 @@ io.on('connection', function(socket) {
       var room = rooms[room_id];
       room.verifyAndLaunch();
    });
+   
    
    /** Socket disconnect */
    

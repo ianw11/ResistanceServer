@@ -1,66 +1,70 @@
 var _game = require('./resistance_game');
-var game = null;
-
-var names = [];
-var sockets = {};
-
-
 var _ai = require('./ai');
-var connected_ai = [];
 
-var numPlayers = -1;
+var self = null;
 
-var team_list = null;
-
-var self = this;
-this.sendChat = null;
-
-function addAI(socket, ai_id) {
-   socket.name = 'Faker ' + (ai_id);
-   game.addUser(socket.name);
-   sockets[socket.name] = socket;
-   names[names.length] = socket.name;
+var res_server = function(room) {
+   self = this;
    
-   connected_ai[ai_id].NAME = socket.name;
+   this.room = room;
    
-   applyNewSocket(socket);
+   this.game = new _game.Game();
+   
+   this.numPlayers = room.targetPlayers;
+   
+   var num_ai = room.numAI;
+   var room_id = room.id;
+   this.connected_ai = [];
+   while (num_ai > 0) {
+      this.connected_ai[this.connected_ai.length] = new _ai.AI(this.connected_ai.length, this.game, room_id);
+      
+      --num_ai;
+   }
+   
+   this.sockets = {};
+   this.num = 0;
+   for (var key in room.connectedPlayers) {
+      var socket = room.connectedPlayers[key];
+      
+      this.game.addUser(socket.name);
+      this.sockets[socket.name] = socket;
+      this.num++;
+      
+      self.applyNewSocket(socket);
+   };
 };
 
-function closeAI() {
+res_server.prototype.addAI = function(socket, ai_id) {
+   socket.name = 'Faker ' + ai_id;
+   
+   self.game.addUser(socket.name);
+   self.sockets[socket.name] = socket;
+   self.num++;
+   
+   self.connected_ai[ai_id].NAME = socket.name;
+   
+   self.applyNewSocket(socket);
+};
+
+res_server.prototype.closeAI = function() {
    connected_ai.forEach(function(ai) {
       ai.terminate();
    });
 };
 
-function init_server(socket_arr, room_id, num_ai, totalP, chatFunc) {
-   self.sendChat = chatFunc;
-   game = new _game.Game();
-   
-   numPlayers = totalP;
-   
-   while (num_ai > 0) {
-      connected_ai[connected_ai.length] = new _ai.AI(connected_ai.length, game, room_id);
-      
-      --num_ai;
-   }
 
-   socket_arr.forEach(function(socket) {
-      game.addUser(socket.name);
-      sockets[socket.name] = socket;
-      names[names.length] = socket.name;
-      
-      applyNewSocket(socket);
-   });
-   
-};
 
-function applyNewSocket(socket) {
+
+
+
+res_server.prototype.applyNewSocket = function(socket) {
    // team_list (submitting the mission team list)
+   
    socket.on('team_list', function(team) {
       
-      if (game.correctNumberOnTeam(team.length)) {
+      if (self.game.correctNumberOnTeam(team.length)) {
          emit('vote_team', team);
-         team_list = team;
+         self.team_list = team;
       } else {
          socket.emit('violation', "Wrong number of people on team");
       }
@@ -69,15 +73,15 @@ function applyNewSocket(socket) {
    // vote
    socket.on('vote', function(choice) {
       // Submit the current vote
-      if (game.teamVote(choice)) {
+      if (self.game.teamVote(choice)) {
          
-         sendGameChat(game.teamVoteStats() + " YES votes out of " + game.getNumUsers());
+         sendGameChat(self.game.teamVoteStats() + " YES votes out of " + self.game.getNumUsers());
          
          // If everybody has voted, move on to the result analysis
-         var result = game.getVoteResult();
-         emit('team_vote_result', result, team_list);
+         var result = self.game.getVoteResult();
+         emit('team_vote_result', result, self.team_list);
          if (result) {
-            sendGameChat('Mission: ' + team_list);
+            sendGameChat('Mission: ' + self.team_list);
          } else {
             advanceVote();
          }
@@ -87,15 +91,17 @@ function applyNewSocket(socket) {
    // mission
    socket.on('mission', function(res) {
       // Submit the vote for the current mission
-      if (game.mission(res)) {
+      if (self.game.mission(res)) {
          
-         sendGameChat(game.missionVoteStats() + ' FAIL votes out of ' + game.getNumberOfAgents());
-         emit('AI_mission', game.missionVoteStats(), game.getNumberOfAgents());
+         var numFails = self.game.missionVoteStats();
+         var numAgents = self.game.getNumberOfAgents();
+         sendGameChat(numFails + ' FAIL votes out of ' + numAgents);
+         emit('AI_mission', numFails, numAgents);
          
          // Once everybody has voted, get results
-         var result = game.missionResult();
+         var result = self.game.missionResult();
          
-         var winningTeam = game.getWinner();
+         var winningTeam = self.game.getWinner();
          if (winningTeam !== -1) {
             victory(winningTeam);
             return;
@@ -111,44 +117,50 @@ function applyNewSocket(socket) {
    
    // To update the client's scores
    socket.on('update_scores', function() {
-      socket.emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
+      socket.emit('updated_scores', self.game.getNumResistanceWins(), self.game.getNumSpyWins());
    });
    
-   if (names.length === numPlayers) {
+   
+   // Once all players and AI are setup
+   
+   if (self.num === self.numPlayers) {
       resetGame();
    }
    
 };
 
 function resetGame() {
-   game.newGame();
+   self.game.newGame();
    
-   names.forEach(function(name) {
-      var socket = sockets[name];
+   sendGameChat('# of Resistance: ' + self.game.getNumResistance());
+   sendGameChat('# of Spies: ' + self.game.getNumSpies());
+   
+   for (var key in self.sockets) {
+      var socket = self.sockets[key];
       
-      var role = game.getRole(socket.name);
+      var role = self.game.getRole(socket.name);
       if (role === 'SPY') {
-         socket.emit('role', name, role, game.getSpies());
+         socket.emit('role', key, role, self.game.getSpies());
       } else {
-         socket.emit('role', name, role);
+         socket.emit('role', key, role);
       }
-   });
+   };
    
    advanceRound();
 };
 
 function advanceRound() {
-   if (game.nextRound()) {
+   if (self.game.nextRound()) {
       victory(game.getWinner());
       return;
    }
    
    newLeader();
-   emit('updated_scores', game.getNumResistanceWins(), game.getNumSpyWins());
+   emit('updated_scores', self.game.getNumResistanceWins(), self.game.getNumSpyWins());
 };
 
 function advanceVote() {
-   if (game.nextVote()) {
+   if (this.game.nextVote()) {
       victory(0);
       return;
    }
@@ -157,10 +169,10 @@ function advanceVote() {
 };
 
 function newLeader() {
-   var leader = game.getRoundLeader();
+   var leader = self.game.getRoundLeader();
    
-   sockets[leader].emit('leader', game.getUsers(), game.getNumberOfAgents());
-   emit('curr_leader', leader, game.getRoundNumber(), game.getVoteNumber());
+   self.sockets[leader].emit('leader', self.game.getUsers(), self.game.getNumberOfAgents());
+   emit('curr_leader', leader, self.game.getRoundNumber(), self.game.getVoteNumber());
    
    
    sendGameChat('****************************');
@@ -171,7 +183,7 @@ function newLeader() {
 
 function victory(team) {
    emit('victory', team);
-   var users = game.getUsers();
+   var users = self.game.getUsers();
    
    sendGameChat('***---***---***---');
    
@@ -184,18 +196,15 @@ function victory(team) {
 };
 
 function sendGameChat(msg) {
-   self.sendChat('GAME-> ' + msg);
+   self.room.sendChatClient('GAME-> ' + msg);
 };
 
 
 function emit(msg, param1, param2, param3) {
-   names.forEach(function(name) {
-      //console.log("Emitting " + msg + " to " + name);
-      var socket = sockets[name];
+   for (var key in self.sockets) {
+      var socket = self.sockets[key];
       socket.emit(msg, param1, param2, param3);
-   });
+   };
 };
 
-module.exports = {init_server: init_server,
-                  addAI: addAI,
-                  closeAI: closeAI};
+module.exports = res_server;

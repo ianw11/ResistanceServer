@@ -74,7 +74,7 @@ Room.prototype.verifyAndLaunch = function() {
       
    } else {
       // Have enough people joined the game?
-      if ( !(this.numPlayers() === this.numHumans) )
+      if ( !(this.numConnectedPlayers === this.numHumans) )
          return false;
    }
    
@@ -102,14 +102,14 @@ Room.prototype.verifyAndLaunch = function() {
    });
    /** End of section to reload games **/
    
-      
-   this.externalCode = require("./" + this.serverUrl);
-   this.externalCode.init_server(this.connectedPlayers, this.id, this.numAI, this.targetPlayers, this.sendChat);
+   var req = require("./" + this.serverUrl);
+   this.externalCode = new req(this);
    
    var self = this;
-   this.connectedPlayers.forEach(function(socket) {
+   for (var key in this.connectedPlayers) {
+      var socket = this.connectedPlayers[key];
       socket.emit('start_game', self.url);
-   });
+   };
 };
 
 
@@ -118,9 +118,22 @@ Room.prototype.addAI = function(socket, ai_id) {
 };
 
 Room.prototype.sendChat = function(msg) {
-   for (var socket in this.connectedPlayers) {
+   // Scope problems
+   var that = this.room;
+   
+   //console.log(that);
+   
+   for (var socketKey in that.connectedPlayers) {
+      var socket = that.connectedPlayers[socketKey];
       socket.emit('chat_message', msg);
-   });
+   };
+};
+
+Room.prototype.sendChatClient = function(msg) {
+   for (var socketKey in this.connectedPlayers) {
+      var socket = this.connectedPlayers[socketKey];
+      socket.emit('chat_message', msg);
+   };
 };
 
 
@@ -134,17 +147,10 @@ Room.prototype.closeRunningGame = function() {
 /* When a socket disconnects */
 Room.prototype.disconnect = function(socket) {
    
-   var ndx = -1;
-   for (var i = 0; i < this.connectedPlayers.length; ++i) {
-      if (this.connectedPlayers[i].uid === socket.uid) {
-         ndx = i;
-      }
-   }
+   socket.removeListener("chat_message", this.sendChat);
    
-   socket.removeListener("chat_message", self.sendChat);
-   
-   this.connectedPlayers.splice(ndx, 1);
-   this.connectedPlayerNames.splice(ndx, 1);
+   delete this.connectedPlayers[socket.name];
+   this.numConnectedPlayers--;
    this.updateConnections();
    
    if (socket.name === this.owner)
@@ -155,15 +161,16 @@ Room.prototype.disconnect = function(socket) {
 /* If the owner leaves a room, all others need to get kicked */
 Room.prototype.kickAll = function() {
    var self = this;
-   this.connectedPlayers.forEach(function(socket) {
+   for (var key in this.connectedPlayers) {
+      var socket = this.connectedPlayers[key];
       socket.emit('room_closed', self.active);
-      self.disconnect(socket);
-   });
+      this.disconnect(socket);
+   };
 };
 
 /* Returns the number of players waiting in a room */
 Room.prototype.isEmpty = function() {
-   return this.connectedPlayers.length === 0;
+   return this.numConnectedPlayers === 0;
 };
 
 
@@ -175,7 +182,7 @@ Room.prototype.toObject = function() {
            id: this.id,
            numAI: this.numAI,
            numHumans: this.numHumans,
-           inQueue: this.numPlayers(),
+           inQueue: this.numConnectedPlayers,
            title: this.title,
            autofill: this.autofill,
            targetPlayers: this.targetPlayers

@@ -123,11 +123,13 @@ function start() {
 
 
    socket.on('mission_result', function(res) {
-      setHeaderText((res === false ? 'Spy' : 'Resistance') + " wins mission");
+      setHeaderText( (res ? 'Resistance' : 'Spy') + " wins mission");
    });
 
 
    socket.on('victory', function(side) {
+      updateScoreBar();
+      
       var text = "";
       if (side === 0)
          text += "SPIES WIN";

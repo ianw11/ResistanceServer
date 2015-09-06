@@ -255,7 +255,9 @@ module.exports = {
             ++numSpyWins;
          }
          
+         // Get the result
          var res = missionPassed;
+         // And reset the holder
          missionPassed = true;
          
          this.verifyState();
