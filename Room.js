@@ -1,6 +1,13 @@
 var Room = function(id, owner, gameObj) {
+   // Signifies if this room is accepting 
+   this.accepting = true;
+   
    this.id = id;
    this.owner = owner;
+   
+   // <playerName>:<Player>
+   this.connectedPlayers = {};
+   this.numConnectedPlayers = 0;
    
    this.baseGame = gameObj.baseGame;
    this.modules = gameObj.modules;
@@ -9,23 +16,57 @@ var Room = function(id, owner, gameObj) {
    this.title = gameObj.title === '' ? this.baseGame : gameObj.title;
    this.targetPlayers = parseInt(gameObj.targetPlayers);
    this.autofill = gameObj.autofill;
-   
    this.url = gameObj.url;
-   
    this.serverUrl = gameObj.serverUrl;
    
-   this.connectedPlayers = [];
-   this.connectedPlayerNames = [];
    
    this.active = false;
-   
    
    this.externalCode = null;
 }
 
-Room.prototype.numPlayers = function() {
-   return this.connectedPlayers.length;
+/* Returns if this room should appear in the 'available rooms' list */
+Room.prototype.acceptingPlayers = function() {
+   return this.accepting;
 };
+
+/* When a client wants to connect to this room */
+Room.prototype.connect = function(socket) {
+   
+   if (this.numConnectedPlayers === this.numHumans)
+      return false;
+   
+   var self = this;
+   socket.on("chat_message", self.sendChat);
+   
+   this.connectedPlayers[socket.name] = socket;
+   this.numConnectedPlayers++;
+   
+   this.updateConnections();
+   
+   return true;
+};
+
+/* Updates the userlist in the room */
+Room.prototype.updateConnections = function() {
+   var sockets = [];
+   var names = [];
+   
+   // Build the list of sockets and names
+   for (var key in this.connectedPlayers) {
+      var sock = this.connectedPlayers[key];
+      sockets[sockets.length] = sock;
+      names[names.length] = sock.name;
+   }
+   
+   // Emit the list of names to each socket
+   sockets.forEach(function(socket) {
+      socket.emit('player_list_update', names);
+   });
+};
+
+
+
 
 Room.prototype.verifyAndLaunch = function() {
    if (this.autofill) {
@@ -37,20 +78,18 @@ Room.prototype.verifyAndLaunch = function() {
          return false;
    }
    
-   return true;
-};
-
-Room.prototype.addAI = function(socket, ai_id) {
-   this.externalCode.addAI(socket, ai_id);
-};
-
-Room.prototype.sendChat = function(msg) {
-   connectedPlayers.forEach(function(socket) {
-      socket.emit('chat_message', msg);
-   });
-};
-
-Room.prototype.takeTheReins = function() {
+   
+   // Perform the launch part
+   
+   this.accepting = false;
+   this.active = true;
+   
+   for (var sock in this.connectedPlayers) {
+      sock.inGame = true;
+   };
+   
+   
+   
    /** Section to reload games **/
    var toDel = [];
    for (var key in require.cache) {
@@ -62,18 +101,29 @@ Room.prototype.takeTheReins = function() {
       delete require.cache[val];
    });
    /** End of section to reload games **/
+   
       
    this.externalCode = require("./" + this.serverUrl);
-   var self = this;
-   
-   this.active = true;
-   
    this.externalCode.init_server(this.connectedPlayers, this.id, this.numAI, this.targetPlayers, this.sendChat);
    
+   var self = this;
    this.connectedPlayers.forEach(function(socket) {
       socket.emit('start_game', self.url);
    });
 };
+
+
+Room.prototype.addAI = function(socket, ai_id) {
+   this.externalCode.addAI(socket, ai_id);
+};
+
+Room.prototype.sendChat = function(msg) {
+   for (var socket in this.connectedPlayers) {
+      socket.emit('chat_message', msg);
+   });
+};
+
+
 
 Room.prototype.closeRunningGame = function() {
    this.kickAll();
@@ -81,25 +131,7 @@ Room.prototype.closeRunningGame = function() {
    this.externalCode.closeAI();
 };
 
-Room.prototype.updateConnections = function() {
-   for (var ndx in this.connectedPlayers) {
-      var sock = this.connectedPlayers[ndx];
-      sock.emit('player_list_update', this.connectedPlayerNames);
-   }
-};
-
-Room.prototype.connect = function(socket) {
-   
-   if (this.connectedPlayers.length === this.numHumans)
-      return false;
-   
-   this.connectedPlayers[this.connectedPlayers.length] = socket;
-   this.connectedPlayerNames[this.connectedPlayerNames.length] = socket.name;
-   this.updateConnections();
-   
-   return true;
-};
-
+/* When a socket disconnects */
 Room.prototype.disconnect = function(socket) {
    
    var ndx = -1;
@@ -108,6 +140,8 @@ Room.prototype.disconnect = function(socket) {
          ndx = i;
       }
    }
+   
+   socket.removeListener("chat_message", self.sendChat);
    
    this.connectedPlayers.splice(ndx, 1);
    this.connectedPlayerNames.splice(ndx, 1);
@@ -118,6 +152,7 @@ Room.prototype.disconnect = function(socket) {
    
 };
 
+/* If the owner leaves a room, all others need to get kicked */
 Room.prototype.kickAll = function() {
    var self = this;
    this.connectedPlayers.forEach(function(socket) {
@@ -125,6 +160,13 @@ Room.prototype.kickAll = function() {
       self.disconnect(socket);
    });
 };
+
+/* Returns the number of players waiting in a room */
+Room.prototype.isEmpty = function() {
+   return this.connectedPlayers.length === 0;
+};
+
+
 
 Room.prototype.toObject = function() {
    return {owner: this.owner,

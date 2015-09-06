@@ -12,19 +12,152 @@ socket.room -- the player is in
 socket.name -- the name of the user
 socket.uid -- unique ID of a socket
 socket.ai -- whether this is ai or not
-socket.inGame -- whether this connection is in a game
 **********/
 
-var room_id = -1;
 
-// Array to hold Rooms waiting for players
-var open_rooms = [];
-// Array to hold active Rooms for AI to connect to
-var active_rooms = [];
 
-// Counter to identify connections
-var playerUID = -1;
+/* Counter to identify client connections (this includes AI) */
+var playerUID = 0;
 
+/* room_id is a counter to give each room a unique id */
+var room_id = 0;
+
+
+/* Rooms is a hashmap in the form <roomID>:<Room> */
+var rooms = {};
+
+
+
+/* Begin definition of socket code */
+
+io.on('connection', function(socket) {
+   socket.uid = playerUID++;
+   socket.inGame = false;
+   socket.ai = false;
+   
+   /* The first thing the client does is ask the user what their name is */
+   socket.on('name', function(name) {
+      socket.name = name;
+   });
+   
+   /** Create room */
+   
+   /* When the client wants to create a game, they open a room for others to join */
+   socket.on('open_room', function(game_obj) {
+      var roomId = room_id++;
+      
+      var room = new Room(roomId, socket.name, game_obj);
+      rooms[] = roomId;
+      
+      room.connect(socket);
+      socket.room = room
+      
+      socket.emit('in_room', room.toObject(), true);
+   });
+   
+   /** Join room */
+   
+   /* When the client wants to join a game, they need to see all the open rooms */
+   socket.on('get_open_rooms', function() {
+      var rms = [];
+      
+      for (var key in rooms) {
+         if (rooms[key].acceptingPlayers()) {
+            rms[rms.length] = rooms[key].toObject();
+         }
+      }
+      
+      socket.emit('open_rooms', rms);
+   });
+   
+   /* When a client finds a room they want to join */
+   socket.on('join_room', function(roomId) {
+      var room = rooms[roomId];
+      
+      // If the room went empty or the owner started the game
+      if (room === undefined || !room.acceptingPlayers()) {
+         socket.emit('notify', "Room has already closed.  Please choose another");
+         return;
+      }
+      
+      // When the room has enough people to play but the owner hasn't started the game yet
+      if (!room.connect(socket)) {
+         socket.emit('notify', 'Room is full. Please choose another');
+         return;
+      }
+      
+      socket.room = room;
+      
+      socket.emit('in_room', room.toObject(), false);
+   });
+   
+   /** Leave room */
+   
+   /* When a client leaves a room. Handles the owner leaving too */
+   socket.on('leaving_room', function() {
+      socket.room.disconnect(socket);
+      
+      verifyRoom(socket.room);
+      
+      socket.room = null;
+   });
+   
+   /** Start room */
+   
+   /* When the game owner wants to start the game */
+   socket.on('ready_to_start', function(room_id) {
+      var room = rooms[room_id];
+      room.verifyAndLaunch();
+   });
+   
+   /** Socket disconnect */
+   
+   /* If the socket closes */
+   socket.on('disconnect', function() {
+      if (socket.ai) {
+         return;
+      }
+      
+      if (socket.inGame === true) {
+         socket.room.closeRunningGame();
+         
+         delete rooms[socket.room.id];
+         
+         return;
+      }
+      
+      if (socket.room !== undefined && socket.room !== null) {
+         socket.room.disconnect(socket);
+         
+         verifyRoom(socket.room);
+      }
+   });
+   
+   
+   /* Function to hook AI in correctly */
+   socket.on('ai', function(room_id, ai_id) {
+      socket.ai = true;
+      
+      var room = rooms[room_id];
+      room.addAI(socket, ai_id);
+   });
+   
+});
+
+
+
+/* HELPER FUNCTIONS */
+
+function verifyRoom(room) {
+   if (room.isEmpty()) {
+      delete rooms[room.id];
+   }
+};
+
+
+
+
+/** Actually start the server */
 
 // We define a route handler '/' that gets called when we hit the website home
 app.get('/', function(req, res) {
@@ -51,7 +184,6 @@ app.get('/avalon.html', function(req, res) {
 });
 
 
-
 /* MultiSelect code */
 app.get('/multi_select', function (req, res) {
    res.sendFile(__dirname + '/multi_select/css/multi-select.css');
@@ -63,159 +195,6 @@ app.get('/img/switch.png', function(req, res) {
    res.sendFile(__dirname + '/multi_select/img/switch.png');
 });
 /* End of MultiSelect code */
-
-
-function verifyRoom(room) {
-   if (room.numPlayers() === 0) {
-      var ndx = -1;
-      for (var i = 0; i < open_rooms.length && ndx === -1; ++i) {
-         if (open_rooms[i].id === room.id)
-            ndx = i;
-      }
-      if (ndx > -1) {
-         open_rooms.splice(ndx, 1);
-      }
-   }
-};
-
-/* Begin definition of socket code */
-
-io.on('connection', function(socket) {
-   socket.uid = ++playerUID;
-   socket.inGame = false;
-   socket.ai = false;
-   
-   socket.on('name', function(name) {
-      socket.name = name;
-   });
-   
-   socket.on('get_open_rooms', function() {
-      var rms = [];
-      
-      for (var i = 0; i < open_rooms.length; ++i) {
-         rms[rms.length] = open_rooms[i].toObject();
-      }
-      
-      socket.emit('open_rooms', rms);
-   });
-   
-   socket.on('open_room', function(game_obj) {
-      var room = new Room(++room_id, socket.name, game_obj);
-      open_rooms[open_rooms.length] = room;
-      
-      room.connect(socket);
-      socket.room = room
-      
-      socket.emit('in_room', room.toObject(), true);
-   });
-   
-   socket.on('join_room', function(room_id) {
-      var room = null;
-      for (var i = 0; i < open_rooms.length; ++i) {
-         if (open_rooms[i].id === room_id)
-            room = open_rooms[i];
-      }
-      
-      if (room === null) {
-         socket.emit('notify', "Room has already closed.  Please choose another");
-         return;
-      }
-      
-      if (!room.connect(socket)) {
-         socket.emit('notify', 'Room is full. Please choose another');
-         return;
-      }
-      
-      socket.room = room;
-      
-      socket.emit('in_room', room.toObject(), false);
-   });
-   
-   socket.on('leaving_room', function() {
-      socket.room.disconnect(socket);
-      
-      verifyRoom(socket.room);
-      
-      socket.room = null;
-   });
-   
-   
-   socket.on('ready_to_start', function(room_id) {
-      var room = null;
-      var room_ndx = -1;
-      
-      // Find the room that's ready
-      open_rooms.forEach(function(r, ndx) {
-         if (r.id === room_id) {
-            room = r;
-            room_ndx = ndx;
-         }
-      });
-      
-      // Verify it's ready
-      var isReady = room.verifyAndLaunch();
-      
-      // If it's ready, remove it from 'open' and move it to 'active'
-      if (isReady) {
-         open_rooms.splice(room_ndx, 1);
-         
-         active_rooms[active_rooms.length] = room;
-         
-         // Mark each socket as 'in game'
-         room.connectedPlayers.forEach(function(sock) {
-            sock.inGame = true;
-         });
-         
-         room.takeTheReins();
-      }
-   });
-   
-   
-   socket.on('disconnect', function() {
-      if (socket.ai) {
-         return;
-      }
-      
-      
-      if (socket.inGame === true) {
-         socket.room.closeRunningGame();
-         
-         var ndx = -1;
-         for (var i = 0; i < active_rooms.length && ndx === -1; ++i) {
-            if (active_rooms[i].id === socket.room.id)
-               ndx = i;
-         }
-         if (ndx > -1) {
-            active_rooms.splice(ndx, 1);
-         }
-         
-         return;
-      }
-      
-      if (socket.room !== undefined && socket.room !== null) {
-         socket.room.disconnect(socket);
-         
-         verifyRoom(socket.room);
-      }
-   });
-   
-   
-   socket.on('ai', function(room_id, ai_id) {
-      socket.ai = true;
-      
-      var room = null;
-      
-      // Find the room
-      active_rooms.forEach(function(r) {
-         if (r.id === room_id)
-            room = r;
-      });
-      
-      room.addAI(socket, ai_id);
-   });
-   
-});
-
 
 
 // Lastly we listen to port 3000

@@ -75,7 +75,9 @@ $('#nameInputForm').submit(function() {
 /* Navigation */
 
 var backToHome = function() {
-   $('#chatDiv').toggle(0);
+   if (this.chatVisible) {
+      $('#chatDiv').toggle(0);
+   }
    
    _swapVisibility($('#createOrJoin'));
 };
@@ -312,6 +314,7 @@ socket.on('open_rooms', function(list) {
 socket.on('in_room', function(room, isOwner) {
    _swapVisibility($('#room'));
    $('#chatDiv').toggle(0);
+   chatVisible = true;
    
    ownerOfRoom = isOwner;
    

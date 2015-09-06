@@ -32,8 +32,8 @@ function closeAI() {
    });
 };
 
-function init_server(socket_arr, room_id, num_ai, totalP, sendChat) {
-   self.sendChat = sendChat;
+function init_server(socket_arr, room_id, num_ai, totalP, chatFunc) {
+   self.sendChat = chatFunc;
    game = new _game.Game();
    
    numPlayers = totalP;
