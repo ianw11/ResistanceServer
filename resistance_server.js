@@ -164,7 +164,7 @@ function advanceRound() {
 };
 
 function advanceVote() {
-   if (this.game.nextVote()) {
+   if (self.game.nextVote()) {
       victory(0);
       return;
    }
