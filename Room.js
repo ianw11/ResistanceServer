@@ -86,12 +86,27 @@ Room.prototype.verifyAndLaunch = function() {
    this.accepting = false;
    this.active = true;
    
-   for (var sock in this.connectedPlayers) {
-      sock.inGame = true;
+   var self = this;
+   for (var key in this.connectedPlayers) {
+      var socket = this.connectedPlayers[key];
+      
+      socket.inGame = true;
+      
+      this.ready = 0;
+      
+      socket.on('ready', function() {
+         self.ready++;
+         
+         if (self.ready === self.numConnectedPlayers) {
+            self.kickItOff();
+         }
+      });
+      
+      socket.emit('start_game', self.url);
    };
-   
-   
-   
+};
+
+Room.prototype.kickItOff = function() {
    /** Section to reload games **/
    var toDel = [];
    for (var key in require.cache) {
@@ -104,14 +119,11 @@ Room.prototype.verifyAndLaunch = function() {
    });
    /** End of section to reload games **/
    
+   
    var req = require("./" + this.serverUrl);
    this.externalCode = new req(this);
    
-   var self = this;
-   for (var key in this.connectedPlayers) {
-      var socket = this.connectedPlayers[key];
-      socket.emit('start_game', self.url);
-   };
+   
 };
 
 

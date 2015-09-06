@@ -51,7 +51,7 @@ res_server.prototype.addAI = function(socket, ai_id) {
 };
 
 res_server.prototype.closeAI = function() {
-   connected_ai.forEach(function(ai) {
+   this.connected_ai.forEach(function(ai) {
       ai.terminate();
    });
 };
