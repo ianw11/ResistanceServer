@@ -32,6 +32,16 @@ Room.prototype.acceptingPlayers = function() {
    return this.accepting;
 };
 
+/* Verifys each name is unique (flaw of site but whatever) */
+Room.prototype.doesNameExist = function(name) {
+   for (var key in this.connectedPlayers) {
+      if (name === key)
+         return true;
+   }
+   
+   return false;
+};
+
 /* When a client wants to connect to this room */
 Room.prototype.connect = function(socket) {
    

@@ -82,6 +82,12 @@ io.on('connection', function(socket) {
          return;
       }
       
+      var nameExists = room.doesNameExist(socket.name);
+      if (nameExists) {
+         socket.emit('notify', "Name already in use, can't join this room");
+         return;
+      }
+      
       // When the room has enough people to play but the owner hasn't started the game yet
       if (!room.connect(socket)) {
          socket.emit('notify', 'Room is full. Please choose another');
