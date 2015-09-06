@@ -11,8 +11,10 @@ var Room = function(id, owner, gameObj) {
    
    this.baseGame = gameObj.baseGame;
    this.modules = gameObj.modules;
+   
    this.numAI = parseInt(gameObj.numAI);
    this.numHumans = parseInt(gameObj.numHumans);
+   
    this.title = gameObj.title === '' ? this.baseGame : gameObj.title;
    this.targetPlayers = parseInt(gameObj.targetPlayers);
    this.autofill = gameObj.autofill;

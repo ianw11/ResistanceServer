@@ -13,6 +13,10 @@ var res_server = function(room) {
    this.numPlayers = room.targetPlayers;
    
    var num_ai = room.numAI;
+   if (num_ai === -1) {
+      num_ai = room.targetPlayers - room.numConnectedPlayers;
+   }
+   
    var room_id = room.id;
    this.connected_ai = [];
    while (num_ai > 0) {
