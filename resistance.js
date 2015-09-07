@@ -21,6 +21,8 @@ function start() {
    $('#mission_vote_pass')[0].onclick = voteMissionPass;
    $('#mission_vote_fail')[0].onclick = voteMissionFail;
    
+   $('#rules_button')[0].onclick = rulesPopup;
+   
    // Hide all divs that are not yet in use
    $('.r_hidden').each(function(index) {
       $(this).toggle(0);
@@ -218,6 +220,11 @@ function voteMissionPass() {
 function voteMissionFail() {
    voteMission();
    socket.emit('mission', 0);
+};
+
+
+function rulesPopup() {
+   window.alert("Rules text\nSecond line of rules text");
 };
 
 

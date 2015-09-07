@@ -99,6 +99,10 @@ res_server.prototype.applyNewSocket = function(socket) {
          // Also emit to the AI the exact results of the mission
          emit('AI_mission', numFails, numAgents);
          
+         // This line NEEDS to be here because missionResult() needs to be
+         // called before getWinner()
+         var result = self.game.missionResult();
+         
          // Check to see if there is a winner
          var winningTeam = self.game.getWinner();
          if (winningTeam !== -1) {
@@ -107,7 +111,7 @@ res_server.prototype.applyNewSocket = function(socket) {
          }
          
          // If no winner, tell the clients
-         var result = self.game.missionResult();
+         
          emit('mission_result', result);
          
          advanceRound();
@@ -183,6 +187,7 @@ function newLeader() {
 };
 
 function victory(team) {
+   console.log('victory');
    emit('victory', team);
    var users = self.game.getUsers();
    

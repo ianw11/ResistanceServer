@@ -26,21 +26,48 @@
    <div class='flex'>
       <div class='header mycenter'>
          <h1 id='status'>THE RESISTANCE</h1>
-         <h1 id='scoreBar'></button>
-         <h1 id='roleElem'></h1>
-         <h2 id='roundAndVote'></h2>
-         <p>
-         Your Teammates:
-         <ul id='teammates'></ul>
+         <table border='2'>
+            <tr>
+               <td>
+                  <h1 id='scoreBar'></button>
+               </td>
+               <td>
+                  <h2 id='roundAndVote'></h2>
+               </td>
+            </tr>
+            <tr>
+               <td>
+                  <h1 id='roleElem'></h1>
+               </td>
+               <td>
+                  Your Teammates:
+                  <ul id='teammates'></ul>
+               </td>
+            </tr>
+            <tr>
+               <h3>
+                  <td>
+                     Active Modules
+                  </td>
+                  <td>
+                     <ul id='module_list'></ul>
+                  </td>
+               </h3>
+            </tr>
+         </table>
+         
+         
+         <button id='rules_button'>See Rules</button>
       </div>
+      
       <div id='container'>
          <div class='r_hidden' id='emptyDiv'>
          </div>
          
-         
+         <!-- 1. Wait for everybody to connect -->
          <div id='startDiv'><h3>Please Wait For Everybody To Connect...</h3></div>
          
-         
+         <!-- 2. The current leader chooses a team to go on the mission -->
          <div class='mycenter r_hidden' id='role_screen'>
             <h1 id='currLeader'></h1>
             <p>
@@ -52,6 +79,7 @@
             </div>
          </div>
          
+         <!-- 3. Vote on if the team is trustworthy -->
          <div class='mycenter r_hidden' id='voteOnTeam'>
             <h1>Vote on this team</h1>
             <ul id='team_list'></ul>
@@ -61,6 +89,7 @@
             </div>
          </div>
          
+         <!-- 4. Run the mission -->
          <div class='mycenter r_hidden' id='mission'>
             <h1>WAITING FOR MISSION...</h1>
             <div class='horizontal r_hidden' id='on_mission'>
