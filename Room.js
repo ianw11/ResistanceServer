@@ -1,6 +1,8 @@
 var Room = function(id, owner, gameObj) {
    // Signifies if this room is accepting 
    this.accepting = true;
+   // Signifies if the game has begun yet
+   this.active = false;
    
    this.id = id;
    this.owner = owner;
@@ -8,22 +10,17 @@ var Room = function(id, owner, gameObj) {
    // <playerName>:<Player>
    this.connectedPlayers = {};
    this.numConnectedPlayers = 0;
+   this.title = gameObj.title === '' ? this.baseGame : gameObj.title;
    
    this.baseGame = gameObj.baseGame;
    this.modules = gameObj.modules;
    
-   this.numAI = parseInt(gameObj.numAI);
-   this.numHumans = parseInt(gameObj.numHumans);
-   
-   this.title = gameObj.title === '' ? this.baseGame : gameObj.title;
    this.targetPlayers = parseInt(gameObj.targetPlayers);
    this.autofill = gameObj.autofill;
+   this.numHumans = parseInt(gameObj.numHumans);
+   
    this.url = gameObj.url;
    this.serverUrl = gameObj.serverUrl;
-   
-   
-   this.active = false;
-   
    this.externalCode = null;
 }
 
@@ -129,10 +126,9 @@ Room.prototype.kickItOff = function() {
    });
    /** End of section to reload games **/
    
-   
+   // Start the server code
    var req = require("./" + this.serverUrl);
    this.externalCode = new req(this);
-   
    
 };
 
@@ -204,7 +200,6 @@ Room.prototype.toObject = function() {
            baseGame: this.baseGame,
            modules: this.modules,
            id: this.id,
-           numAI: this.numAI,
            numHumans: this.numHumans,
            inQueue: this.numConnectedPlayers,
            title: this.title,

@@ -63,7 +63,7 @@ var PlayerWeight = function(name, autoTrust) {
 module.exports = {
    AI: function(id, game, room_id) {
       
-      //this.NAME = name;
+      this.NAME = 'AI ' + id;
       
       // Passed in parameters
       this.id = id;
@@ -97,6 +97,7 @@ module.exports = {
       var io = require('socket.io-client');
       this.socket = io.connect('http://localhost:3000');
       // Let the server know that this AI exists
+      // And to add it to the right room
       this.socket.emit('ai', room_id, id);
       
       /***********************************************************************/
@@ -116,24 +117,9 @@ module.exports = {
       this.lastTeam = [];
       this.lastCaptain = null;
       
-      this.roundNum = -1;
-      this.voteNum = -1;
       
       
-      
-      
-      this.socket.on('accepted_user', function() {
-         // Expected
-      });
-      this.socket.on('new_user', function(name) {
-         // The AI doesn't care about new users
-      });
-      this.socket.on('dropped_user', function(name) {
-         // The AI doesn't care about dropped users
-      });
-      
-      
-      /* Here, the AI saves it's role and any teammates */
+      /** Here, the AI saves it's role and any teammates */
       this.socket.on('role', function(name, role, spies) {
          
          self.role = role;
@@ -161,12 +147,6 @@ module.exports = {
       });
       
       
-      
-      // The AI doesn't care about this function
-      this.socket.on('curr_leader', function(name, roundNum, voteNum) {
-         // Code to set self.roundNum or self.voteNum could go here...
-      });
-      
       /**
        * Choose people to go on a mission
        */
@@ -189,7 +169,7 @@ module.exports = {
             while(team_list.length < numberOfAgents) {
                
                // This loop promises that only 1 spy will be put on a mission
-               // when a spy is the captain
+               // when a spy is the captain (AKA just themselves)
                if (_.contains(self.teammates, userList[q].name)) {
                   q++;
                   continue;
@@ -199,9 +179,13 @@ module.exports = {
                q++;
             }
          } else { // Resistance choices
-         
+            
+            // Array for all the players who seem too sketchy
             var undesirable = [];
-            while(team_list.length < numberOfAgents && q < userList.length) {
+            
+            // Walk through the userList up to once filling up
+            // the team_list with reasonable agents
+            while (team_list.length < numberOfAgents && q < userList.length) {
                
                var curr = userList[q].name;
                if (self.playerWeights[curr].choose()) {
@@ -222,6 +206,7 @@ module.exports = {
             
          }
          
+         // Once done, emit the chosen agents
          self.socket.emit('team_list', team_list);
       });
       
@@ -255,7 +240,6 @@ module.exports = {
                team.forEach(function(name) {
                   worthy &= self.playerWeights[name].choose();
                });
-               //worthy = leaderWeight.choose();
             }
          }
        
@@ -398,6 +382,7 @@ module.exports = {
 };
 
 
+/* Helper function to tell this AI how many spies are on a mission */
 var numSpiesOnMission = function(_team_list, _spy_list) {
    var num = 0;
    

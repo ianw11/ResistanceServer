@@ -51,7 +51,7 @@ window.onload = function() {
    
    _visibleElem = $('#enterName');
    // Hide all divs that are not yet in use
-   $('.myhidden').each(function(index) {
+   $('._hidden').each(function(index) {
       $(this).toggle(0);
    });
 };
@@ -184,6 +184,7 @@ var openGame = function() {
          $('#targetPlayersError')[0].innerHTML = "Bad Value";
          return;
       }
+      numHumans = targetPlayers;
       
       autofill = true;
    }

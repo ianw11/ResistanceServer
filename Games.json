@@ -42,6 +42,13 @@
          "server_url": "avalon_server.js",
          "modules": [
          ]
+      },
+      {
+         "name": "Blank (Template)",
+         "url": "blank.html",
+         "server_url": "blank_server.js",
+         "modules": [
+         ]
       }
 ]
 }

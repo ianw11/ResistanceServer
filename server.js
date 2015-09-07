@@ -14,8 +14,6 @@ socket.uid -- unique ID of a socket
 socket.ai -- whether this is ai or not
 **********/
 
-
-
 /* Counter to identify client connections (this includes AI) */
 var playerUID = 0;
 
@@ -172,7 +170,6 @@ function verifyRoom(room) {
 
 // We define a route handler '/' that gets called when we hit the website home
 app.get('/', function(req, res) {
-   //res.sendFile(__dirname + '/resistance_index.html');
    res.sendFile(__dirname + '/index.html');
 });
 app.get('/index.js', function(req, res) {
@@ -193,7 +190,15 @@ app.get('/resistance.js', function(req, res) {
 app.get('/avalon.html', function(req, res) {
    res.sendFile(__dirname + '/avalon.html');
 });
-
+app.get('/avalon.js', function(req, res) {
+   res.sendFile(__dirname + '/avalon.js');
+});
+app.get('/blank.html', function(req, res) {
+   res.sendFile(__dirname + '/blank.html');
+});
+app.get('/blank.js', function(req, res) {
+   res.sendFile(__dirname + '/blank.js');
+});
 
 /* MultiSelect code */
 app.get('/multi_select', function (req, res) {

@@ -1,15 +1,25 @@
-function init_server(socket_arr, room_id, num_ai, target_num_players) {
+var self = null;
 
+var Avalon = function(room) {
+   self = this;
+   
+   this.room = room;
 };
 
-function addAI(socket, ai_id) {
+Avalon.prototype.addAI = function(socket, ai_id) {
    
 };
 
-function closeAI() {
+Avalon.prototype.closeAI = function() {
    
 };
 
-module.exports = {init_server: init_server,
-                  addAI: addAI,
-                  closeAI: closeAI};
+function applySocket(socket) {
+   
+};
+
+function serverChat(msg) {
+   self.room.sendChatClient('GAME-> ' + msg);
+};
+
+module.exports = Avalon;

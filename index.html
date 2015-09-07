@@ -37,7 +37,7 @@
   
    <body>
       
-      <div class='left myhidden' id='chatDiv'>
+      <div class='left _hidden' id='chatDiv'>
          <h1>Room Chat</h1>
          <ul id="messages"></ul>
          <div id='chatInput'>
@@ -59,14 +59,14 @@
          </div>
          
          <!-- 2. Create a game or join a game -->
-         <div class='myhidden' id='createOrJoin'>
+         <div class='_hidden' id='createOrJoin'>
             <h1>Create or Join?</h1>
             <button id='createGameButton'>Create Game</button>
             <button id='joinGameButton'>Join Game</button>
          </div>
          
          <!-- 2.1. Create a game -->
-         <div class='myhidden' id='createGame'>
+         <div class='_hidden' id='createGame'>
             <h1>What base game would you like to play?</h1>
             <select id='baseGameSelect' onchange='baseGameSelect(this)'>
             </select>
@@ -124,7 +124,7 @@
          </div>
          
          <!-- 2.2. Looking for a game -->
-         <div class='myhidden' id='lookingForGame'>
+         <div class='_hidden' id='lookingForGame'>
             <h1>Available Rooms</h1>
             <div id='openRoomsList'></div>
             <button id='refreshOpenRoomsButton'>Refresh List</button>
@@ -134,7 +134,7 @@
          
          
          <!-- 3. In Room Waiting to Start Game -->
-         <div class='myhidden' id='room'>
+         <div class='_hidden' id='room'>
             <h1 id='roomTitle'></h1>
             <h3>Selected Modules</h3>
             <ul id='moduleList'></ul>
@@ -147,11 +147,11 @@
          </div>
          
          <!-- 4. The actual game (dynamically loaded) -->
-         <div class='myhidden' id='game'>
+         <div class='_hidden' id='game'>
          </div>
          
          <!-- 5. Blank div -->
-         <div class='myhidden' id='_blank'><h1>PLEASE REFRESH</h1></div>
+         <div class='_hidden' id='_blank'><h1>PLEASE REFRESH</h1></div>
          
       </div>
       
