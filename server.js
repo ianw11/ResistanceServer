@@ -189,7 +189,7 @@ function populateGames() {
    
    var server_os = this.process.env.OS;
    delim = '/';
-   if (server_os.toString().indexOf("Win") > -1) {
+   if (server_os !== undefined && server_os.toString().indexOf("Win") > -1) {
       delim = '\\';
    }
    var re = new RegExp('/', 'g');
