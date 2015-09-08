@@ -12,12 +12,6 @@
    #container { display: flex;
                 background: rgb(186, 43, 45); }
    
-   
-   
-   
-   
-   
-   
 </style>
 <link href='multi_select' media='screen' rel='stylesheet' type='text/css'>
 
@@ -44,20 +38,24 @@
                   <ul id='teammates'></ul>
                </td>
             </tr>
-            <tr>
+            <tr class='r_hidden' id='rules_tr'>
                <h3>
                   <td>
                      Active Modules
                   </td>
                   <td>
                      <ul id='module_list'></ul>
+                     <button id='rules_button'>See Rules</button>
                   </td>
                </h3>
             </tr>
          </table>
+         <div class='r_hidden' id='special_knowledge_tr'>
+            <h3>Special Knowledge</h3>
+            <br>
+            <div id='special_knowledge'></div>
+         </div>
          
-         
-         <button id='rules_button'>See Rules</button>
       </div>
       
       <div id='container'>
@@ -96,6 +94,13 @@
                <button id='mission_vote_pass'>Pass Mission</button>
                <button id='mission_vote_fail' class='r_hidden'>Fail Mission</button>
             </div>
+         </div>
+         
+         <!-- ASS MODULE Choose the Commander -->
+         <div class='mycenter r_hidden' id='assassin_guess'>
+            <h2>Assassin, make your guess who the commander is</h2>
+            <select id='assassin_guess_select'></select>
+            <button id='assassinGuessButton'>Make Guess</button>
          </div>
       
       </div>

@@ -21,6 +21,8 @@ function start() {
    $('#mission_vote_pass')[0].onclick = voteMissionPass;
    $('#mission_vote_fail')[0].onclick = voteMissionFail;
    
+   $('#assassinGuessButton')[0].onclick = assassinGuess;
+   
    $('#rules_button')[0].onclick = rulesPopup;
    
    // Hide all divs that are not yet in use
@@ -54,6 +56,21 @@ function start() {
          li.innerHTML = '???';
          mates.append(li);
       }
+   });
+   
+   /* Informs the client which modules are active */
+   socket.on('modules', function(module_arr) {
+      if (module_arr.length === 0)
+         return;
+      
+      $('#rules_tr').toggle(0);
+      
+      var modList = $('#module_list')[0];
+      module_arr.forEach(function(module) {
+         var li = document.createElement('li');
+         li.innerHTML = module;
+         modList.appendChild(li);
+      });
    });
 
    /* If this client is the leader, this is triggered */
@@ -147,6 +164,38 @@ function start() {
       swapVisibility($('#restartButton'));
    });
 
+   
+   /* Module Rules */
+   socket.on('module_rules', function(text) {
+      window.alert(text);
+   });
+   
+   
+   socket.on('assassin_guess', function(names) {
+      swapVisibility($('#assassin_guess'));
+      
+      var assassin_select = $('#assassin_guess_select')[0];
+      names.forEach(function(name) {
+         var opt = document.createElement('option');
+         opt.value = name;
+         opt.innerHTML = name;
+         assassin_select.add(opt);
+      });
+   });
+   
+   socket.on('assassin', function() {
+      $('#special_knowledge_tr').toggle(0);
+      $('#special_knowledge')[0].innerHTML = 'You are the ASSASSIN';
+   });
+   socket.on('commander', function(spylist) {
+      $('#special_knowledge_tr').toggle(0);
+      var text = 'You are the COMMANDER\nSpies: '
+      spylist.forEach(function(name) {
+         text += name + " ||  ";
+      });
+      $('#special_knowledge')[0].innerHTML = text;
+   });
+   
 
    socket.on('updated_scores', function(resistance, spies) {
       $('#scoreBar')[0].innerHTML = "Resistance: " + resistance + " Spies: " + spies;
@@ -223,8 +272,16 @@ function voteMissionFail() {
 };
 
 
+/* FUNCTIONS FOR ASS MODULE */
+function assassinGuess() {
+   var guess = $('#assassin_guess_select')[0].value;
+   
+   socket.emit('assassin_guess', guess);
+};
+
+
 function rulesPopup() {
-   window.alert("Rules text\nSecond line of rules text");
+   socket.emit('module_rules');
 };
 
 

@@ -7,19 +7,21 @@ var Blank = function(room) {
    self = this;
    
    this.room = room;
-   
+};
+
+Blank.prototype.start = function(game) {
    // Add each person from the room and all AI to this object
    this.sockets = {};
    this.num = 0;
    // Add each socket to the local list of sockets
-   for (var key in room.connectedPlayers) {
-      var socket = room.connectedPlayers[key];
+   for (var key in this.room.connectedPlayers) {
+      var socket = this.room.connectedPlayers[key];
       applySocket(socket);
    };
    
    // Create a list of AI that can be deleted later
    this.connected_ai = [];
-   var num_ai = room.targetPlayers - room.numConnectedPlayers;
+   var num_ai = this.room.targetPlayers - this.room.numConnectedPlayers;
    while (num_ai > 0) {
       var ndx = this.connected_ai.length;
       this.connected_ai[ndx] = new AI(ndx, this.game, room.id);

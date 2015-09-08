@@ -1,0 +1,27 @@
+{
+   "name": "The Resistance",
+   "global": {
+      "num_players": {
+         "max": "10",
+         "min": "5"
+      },
+      "allows_ai": "true",
+      "client" : "resistance.html",
+      "clients": {
+         "resistance.html": "resistance/resistance.html",
+         "resistance.js": "resistance/resistance.js",
+         "multi_select": "resistance/multi_select/css/multi-select.css",
+         "multi_select.js": "resistance/multi_select/js/jquery.multi-select.js",
+         "img/switch.png": "resistance/multi_select/img/switch.png"
+      },
+      "server": "resistance/resistance_server.js"
+   },
+   "modules": [
+      {
+         "name": "Assassin (HA)",
+         "val": "ASS",
+         "allows_ai": "false"
+      }
+   ]
+   
+}

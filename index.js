@@ -3,11 +3,15 @@ var socket = io();
 // Keeps track of the element visible to the user
 var _visibleElem = null;
 
-// Holds the list of games downloaded from the server
-var games = null;
+// When CREATING a room, this holds the currently selected game
+var _selected_game_name = null;
+var _selected_game = null;
+var _selected_modules = {};
 
-// URL of the game to load
-var urls = {};
+var _max = -1;
+var _min = -1;
+var _ai = true;
+
 
 // Remembers if this user is currently the owner of the room they're in
 var ownerOfRoom = false;
@@ -18,36 +22,27 @@ var _name = "";
 /* When the page loads */
 window.onload = function() {
    
-   // Download the latest games that are available to play
-   $.getJSON('Games.json')
-   .done(function (data) {
-      games = data.games;
-      games.splice(0, 0, {'name': '', 'modules':[]} );
-   })
-   .fail(function (jqxhr, status, error) {
-      console.log("Error in getting Games.json from server: " + jqxhr.status + ", " + error);
-      alert('Error downloading games, try refreshing page');
-      return;
-   });
-   
-   
+   // Create or Join
    $('#createGameButton')[0].onclick = createGame;
+   $('#joinGameButton')[0].onclick = listRooms;
+   
+   // Create a game
    $('#createGameSubmit')[0].disabled = true;
    $('#createGameSubmit')[0].onclick = openGame;
-   
-   $('#joinGameButton')[0].onclick = listRooms;
-   $('#refreshOpenRoomsButton')[0].onclick = listRooms;
-   
-   $('#lookingForGameBack')[0].onclick = backToHome;
    $('#createGameBack')[0].onclick = backToHome;
    
-   $('#leaveRoomButton')[0].onclick = leaveRoom;
-   
-   $('#chatSendButton')[0].onclick = sendChat;
-   $('#chatForm').submit(sendChat);
-   
+   // Join a game
+   $('#refreshOpenRoomsButton')[0].onclick = listRooms;
+   $('#lookingForGameBack')[0].onclick = backToHome;
    // Preparation for accordion view in the 'Available Rooms' view
    $('#openRoomsList')[0].accordionActive = false;
+   
+   // Leave a game
+   $('#leaveRoomButton')[0].onclick = leaveRoom;
+   
+   // Chat methods
+   $('#chatSendButton')[0].onclick = sendChat;
+   $('#chatForm').submit(sendChat);
    
    _visibleElem = $('#enterName');
    // Hide all divs that are not yet in use
@@ -65,7 +60,7 @@ $('#nameInputForm').submit(function() {
    
    _name = name;
    
-   socket.emit('name', name);
+   socket.emit('_name', name);
    
    _swapVisibility($('#createOrJoin'));
    return false;
@@ -86,137 +81,226 @@ var backToHome = function() {
 /* Room Creation */
 
 var createGame = function() {
+   socket.emit('_get_game_names');
+   
+   _max = -1;
+   _min = -1;
+   updateSummary();
+};
+socket.on('_game_names', function(name_arr) {
    var baseGameSelect = $('#baseGameSelect')[0];
    dropChildren(baseGameSelect);
    
-   for (var ndx in games) {
+   name_arr.forEach(function(game_name) {
       var option = document.createElement('option');
-      var gameName = games[ndx].name
-      option.text = gameName;
-      option.value = gameName;
-      urls[gameName] = games[ndx].url;
-      urls[gameName + 'server'] = games[ndx].server_url;
+      option.text = game_name;
+      option.value = game_name;
       baseGameSelect.appendChild(option);
-   }
-
-   _swapVisibility($('#createGame'));
+   });
    
-};
+   _swapVisibility($('#createGame'));
+});
 
 var baseGameSelect = function(sel) {
+   
+   // Update UI before doing anything else
+   $('#createGameSubmit')[0].disabled = true;
    var moduleForm = $('#moduleForm')[0];
    dropChildren(moduleForm);
    
-   // The currently selected game from the drop-down select
-   var baseGame = sel.value;
-   
-   // If the empty option is selected, nothing else can happen
-   if (baseGame === '') {
-      $('#createGameSubmit')[0].disabled = true;
+   var val = sel.value;
+   if (val === '')
       return;
-   }
-   $('#createGameSubmit')[0].disabled = false;
+   
+   _selected_game_name = val;
+   socket.emit('_get_game_info', val);
+};
+socket.on('_game_info', function(game) {
+   // Save the game for later use
+   _selected_game = game;
+   
+   
+   var moduleForm = $('#moduleForm')[0];
    
    // Display all modules available to play
-   for (var ndx in games) {
-      if (games[ndx].name === baseGame) {
-         for (var mod_ndx in games[ndx].modules) {
-            var module = games[ndx].modules[mod_ndx];
-         
-            var label = document.createElement('label');
-            label.innerHTML = '<input type=checkbox value=' + module.val + '> ' + module.name;
-            moduleForm.appendChild(label);
-            
-            moduleForm.appendChild(document.createElement('br'));
-         }
-      }
+   for (var ndx in _selected_game.modules) {
+      
+      var module = _selected_game.modules[ndx];
+   
+      var label = document.createElement('label');
+      label.innerHTML = '<input type=checkbox onclick="_updateModules(this)" value=' + ndx + '> ' + module;
+      moduleForm.appendChild(label);
+      moduleForm.appendChild(document.createElement('br'));
+      
+   }
+   
+   // Finally enable the button to create the room
+   $('#createGameSubmit')[0].disabled = false;
+   
+   updateParams();
+   
+});
+
+var _updateModules = function(box) {
+   if (box.checked) {
+      socket.emit('_get_module_info', _selected_game_name, box.value);
+   } else {
+      delete _selected_modules[box.value];
+      updateParams();
    }
 };
+socket.on('_module_info', function(module) {
+   var module_val = module.val;
+   _selected_modules[module_val] = module;
+   
+   updateParams();
+});
 
+// Helper function
+function updateParams() {
+   var old_ai = _ai;
+   
+   _max = _selected_game.max_players;
+   _min = _selected_game.min_players;
+   _ai = _selected_game.allows_ai;
+   
+   for (var val in _selected_modules) {
+      var module = _selected_modules[val];
+      
+      if (module.max < _max)
+         _max = module.max;
+      if (module.min > _min)
+         _min = module.min;
+      
+      _ai = (_ai & module.allows_ai) !== 0;
+   }
+   
+   // If _ai has changed
+   if (old_ai !== _ai) {
+      var yes_ai = $('#ai_allowed_table');
+      var no_ai = $('#no_ai_table');
+      yes_ai.toggle(0);
+      no_ai.toggle(0);
+   }
+   
+   updateSummary();
+};
+
+function updateSummary() {
+   var msg = '';
+   msg += 'Maximum number of players: '
+   if (_max === -1)
+      msg += '-';
+   else
+      msg += _max;
+   msg += '<br>';
+   msg += 'Minimum number of players: ';
+   if (_min === -1)
+      msg += '-';
+   else
+      msg += _min;
+   msg += '\n';
+   
+   var summary = $('#room_creation_summary')[0];
+   summary.innerHTML = msg;
+};
+
+
+// Finally open the game
 var openGame = function() {
    $('#numberOfPeopleError')[0].innerHTML = "";
    $('#numberOfAIError')[0].innerHTML = "";
    $('#radioError')[0].innerHTML = "";
    $('#targetPlayersError')[0].innerHTML = "";
+   $('#numberOfPeopleNoAIError')[0].innerHTML = "";
    
    
-   var base = $('#baseGameSelect')[0].value;
-   var modules = [];
    var numHumans = -1;
-   var numAI = -1;
    var targetPlayers = -1;
-   var autofill = false;
-   var gameTitle = $('#gameTitle')[0].value;
+   var potentialTitle = $('#gameTitle')[0].value;
+   var gameTitle = potentialTitle === undefined ? 'TITLE' : potentialTitle;
    
-   
-   var radio = document.getElementsByName('variation');
-   if (!radio[0].checked && !radio[1].checked) {
-      $('#radioError')[0].innerHTML = "One of the radio buttons must be checked";
-      return;
+   if (_ai) {
+      
+      var radio = document.getElementsByName('variation');
+      if (!radio[0].checked && !radio[1].checked) {
+         $('#radioError')[0].innerHTML = "One of the radio buttons must be checked";
+         return;
+      }
+      
+      if (radio[0].checked) {
+         // VERIFY OPTIONS 1
+         numHumans = $('#numberOfPeople')[0].value;
+         if (numHumans > _max || numHumans < 1) {
+            $('#numberOfPeopleError')[0].innerHTML = "Bad Value";
+            return;
+         }
+         
+         var numAI = $('#numberOfAI')[0].value;
+         if (numAI > (_max - 1) || numAI < 0) {
+            $('#numberOfAIError')[0].innerHTML = "Bad Value";
+            return;
+         }
+         
+         var total = parseInt(numHumans) + parseInt(numAI);
+         if (total > _max || total < _min) {
+            $('#numberOfPeopleError')[0].innerHTML = "Bad Value";
+            $('#numberOfAIError')[0].innerHTML = "Bad Value";
+            return;
+         }
+         targetPlayers = total;
+         
+      } else {
+         // VERIFY OPTIONS 2
+         targetPlayers = parseInt($('#targetPlayers')[0].value);
+         if (targetPlayers < _min || targetPlayers > _max) {
+            $('#targetPlayersError')[0].innerHTML = "Bad Value";
+            return;
+         }
+      }
    }
    
-   if (radio[0].checked) {
-      // VERIFY OPTIONS 1
-      numHumans = $('#numberOfPeople')[0].value;
-      if (numHumans > 10 || numHumans < 1) {
-         $('#numberOfPeopleError')[0].innerHTML = "Bad Value";
-         return;
-      }
-      
-      numAI = $('#numberOfAI')[0].value;
-      if (numAI > 9 || numAI < 0) {
-         $('#numberOfAIError')[0].innerHTML = "Bad Value";
-         return;
-      }
-      
-      var total = parseInt(numHumans) + parseInt(numAI);
-      if (total > 10 || total < 5) {
-         $('#numberOfPeopleError')[0].innerHTML = "Bad Value";
-         $('#numberOfAIError')[0].innerHTML = "Bad Value";
-         return;
-      }
-      targetPlayers = total;
-      
-   } else {
-      // VERIFY OPTIONS 2
-      targetPlayers = parseInt($('#targetPlayers')[0].value);
-      if (targetPlayers < 5 || targetPlayers > 10) {
-         $('#targetPlayersError')[0].innerHTML = "Bad Value";
-         return;
-      }
+   if (!_ai) {
+      targetPlayers = parseInt($('#numberOfPeople_noAI')[0].value);
       numHumans = targetPlayers;
-      
-      autofill = true;
+      if (targetPlayers < _min || targetPlayers > _max) {
+         var msg = "Bad Value -- Need ";
+         if (targetPlayers < _min)
+            msg += 'at least ' + _min;
+         else
+            msg += ' at most ' + _max;
+         msg += " players";
+         
+         $('#numberOfPeopleNoAIError')[0].innerHTML = msg;
+         return;
+      }
    }
    
    
-   var modForm = $('#moduleForm')[0];
-   for (var i = 0; i < modForm.length; ++i) {
-      if (modForm[i].checked)
-         modules[modules.length] = modForm[i].value;
+   var modules = {};
+   for (var val in _selected_modules) {
+      modules[val] = _selected_modules[val].name;
    }
    
-   var obj = {baseGame: base,
+   
+   var obj = {baseGame: _selected_game_name,
               modules: modules,
-              numHumans: numHumans,
-              numAI: numAI,
               title: gameTitle,
-              targetPlayers: targetPlayers,
-              autofill: autofill,
-              url: urls[base],
-              serverUrl: urls[base + 'server']};
+              numHumans: numHumans,
+              targetPlayers: targetPlayers
+              };
    
-   socket.emit('open_room', obj);
+   socket.emit('_open_room', obj);
 };
 
 
 /* Room Joining */
 
 var listRooms = function() {
-   socket.emit('get_open_rooms');
+   socket.emit('_get_open_rooms');
 }
 
-socket.on('open_rooms', function(list) {
+socket.on('_open_rooms', function(list) {
    var rooms = $('#openRoomsList')[0];
    
    dropChildren(rooms);
@@ -249,7 +333,7 @@ socket.on('open_rooms', function(list) {
       if (room.modules.length > 0) {
          modStr = "MODS:  ";
          room.modules.forEach(function(val) {
-            modStr += '[' + getFullName(room.baseGame, val) + "]  ";
+            modStr += '[' + val + "]  ";
          });
       } else {
          modStr = "No Mods";
@@ -259,7 +343,7 @@ socket.on('open_rooms', function(list) {
       
       // Looking for
       var numHumanLI = document.createElement('li');
-      if (room.autofill) {
+      if (room.numHumans === -1) {
          numHumanLI.innerHTML = "Looking for UP TO " + (room.targetPlayers - room.inQueue) + " more people";
       } else {
          numHumanLI.innerHTML = "Looking for " + (room.numHumans - room.inQueue) + " more people";
@@ -268,7 +352,7 @@ socket.on('open_rooms', function(list) {
       
       // Num AI
       var numAILI = document.createElement('li');
-      if (room.autofill) {
+      if (room.numHumans === -1) {
          numAILI.innerHTML = "AI will fill in the rest if not enough people join"
       } else {
          numAILI.innerHTML = "Playing with " + room.numAI + " AI";
@@ -280,7 +364,7 @@ socket.on('open_rooms', function(list) {
       joinButton.innerHTML = 'Join Game';
       joinButton.room_id = room.id;
       joinButton.onclick = function() {
-         socket.emit('join_room', this.room_id);
+         socket.emit('_join_room', this.room_id);
       }
       childDiv.appendChild(joinButton);
       
@@ -312,7 +396,7 @@ socket.on('open_rooms', function(list) {
 
 /* Once In A Room */
 
-socket.on('in_room', function(room, isOwner) {
+socket.on('_in_room', function(room, isOwner) {
    _swapVisibility($('#room'));
    $('#chatDiv').toggle(0);
    chatVisible = true;
@@ -326,7 +410,7 @@ socket.on('in_room', function(room, isOwner) {
    var moduleList = $('#moduleList')[0];
    for (var i = 0; i < room.modules.length; ++i) {
       var li = document.createElement('li');
-      li.innerHTML = getFullName(room.baseGame, room.modules[i]);
+      li.innerHTML = room.modules[i];
       moduleList.appendChild(li);
    }
    
@@ -336,12 +420,12 @@ socket.on('in_room', function(room, isOwner) {
       $('#ownerPlaceHolder')[0].appendChild(startButton);
       startButton.innerHTML = 'Start Game';
       startButton.onclick = function() {
-         socket.emit('ready_to_start', room.id);
+         socket.emit('_ready_to_start', room.id);
       }
    }
 });
 
-socket.on('player_list_update', function(names) {
+socket.on('_player_list_update', function(names) {
    var userlist = $('#userList')[0];
    dropChildren(userlist);
    
@@ -354,7 +438,7 @@ socket.on('player_list_update', function(names) {
 });
 
 var leaveRoom = function() {
-   socket.emit('leaving_room');
+   socket.emit('_leaving_room');
    dropChildren($('#ownerPlaceHolder')[0]);
    backToHome(ownerOfRoom);
 };
@@ -376,7 +460,7 @@ socket.on('room_closed', function(active) {
 
 /* Starting Game */
 
-socket.on('start_game', function(url) {
+socket.on('_start_game', function(url) {
    $(function() {
       $('#game').load(url, null, function() {
          start();
@@ -430,16 +514,3 @@ var dropChildren = function(parent) {
       parent.removeChild(parent.firstChild);
 };
 
-/* Helper function to turn a module code to the full name */
-var getFullName = function(game, mod) {
-   var modList = null;
-   for (var i = 0; i < games.length; ++i) {
-      if (games[i].name === game) {
-         modList = games[i].modules;
-      }
-   }
-   for (var i = 0; i < modList.length; ++i) {
-      if (modList[i].val === mod)
-         return modList[i].name;
-   }
-}

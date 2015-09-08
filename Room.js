@@ -1,4 +1,4 @@
-var Room = function(id, owner, gameObj) {
+var Room = function(id, owner, game_params, game_info, delimiter) {
    // Signifies if this room is accepting 
    this.accepting = true;
    // Signifies if the game has begun yet
@@ -7,21 +7,31 @@ var Room = function(id, owner, gameObj) {
    this.id = id;
    this.owner = owner;
    
+   // Save the game_info for later
+   this.game_info = game_info;
+   // externalCode is used for the server code later
+   this.externalCode = null;
+   
    // <playerName>:<Player>
    this.connectedPlayers = {};
    this.numConnectedPlayers = 0;
-   this.title = gameObj.title === '' ? this.baseGame : gameObj.title;
    
-   this.baseGame = gameObj.baseGame;
-   this.modules = gameObj.modules;
+   this.baseGame = game_params.baseGame;
+   this.modules = game_params.modules;
    
-   this.targetPlayers = parseInt(gameObj.targetPlayers);
-   this.autofill = gameObj.autofill;
-   this.numHumans = parseInt(gameObj.numHumans);
+   this.title = (game_params.title === '' ? this.baseGame : game_params.title);
    
-   this.url = gameObj.url;
-   this.serverUrl = gameObj.serverUrl;
-   this.externalCode = null;
+   // If this value is set, it MUST be hit before starting the game
+   this.numHumans = parseInt(game_params.numHumans);
+   this.targetPlayers = parseInt(game_params.targetPlayers);
+   
+   // Load the server code for this game
+   var url = this.game_info.getServerCode();
+   var re = new RegExp('/', 'g');
+   url = url.replace(re, delimiter);
+   var req = require("./" + url);
+   this.externalCode = new req(this, game_info);
+   
 }
 
 /* Returns if this room should appear in the 'available rooms' list */
@@ -42,7 +52,9 @@ Room.prototype.doesNameExist = function(name) {
 /* When a client wants to connect to this room */
 Room.prototype.connect = function(socket) {
    
-   if (this.numConnectedPlayers === this.numHumans)
+   if (this.numHumans !== -1 && this.numConnectedPlayers === this.numHumans)
+      return false;
+   if (this.numConnectedPlayers === this.targetPlayers)
       return false;
    
    var self = this;
@@ -70,7 +82,7 @@ Room.prototype.updateConnections = function() {
    
    // Emit the list of names to each socket
    sockets.forEach(function(socket) {
-      socket.emit('player_list_update', names);
+      socket.emit('_player_list_update', names);
    });
 };
 
@@ -78,10 +90,8 @@ Room.prototype.updateConnections = function() {
 
 
 Room.prototype.verifyAndLaunch = function() {
-   if (this.autofill) {
-      // Add AI until targetPlayers is met
-      
-   } else {
+   
+   if (this.numHumans !== -1) {
       // Have enough people joined the game?
       if ( !(this.numConnectedPlayers === this.numHumans) )
          return false;
@@ -109,12 +119,13 @@ Room.prototype.verifyAndLaunch = function() {
          }
       });
       
-      socket.emit('start_game', self.url);
+      socket.emit('_start_game', self.game_info.getClientUrl());
    };
 };
 
 Room.prototype.kickItOff = function() {
    /** Section to reload games **/
+   /*
    var toDel = [];
    for (var key in require.cache) {
       if (key.indexOf(this.serverUrl) > -1) {
@@ -124,11 +135,11 @@ Room.prototype.kickItOff = function() {
    toDel.forEach(function(val) {
       delete require.cache[val];
    });
+   */
    /** End of section to reload games **/
    
    // Start the server code
-   var req = require("./" + this.serverUrl);
-   this.externalCode = new req(this);
+   this.externalCode.start();
    
 };
 
@@ -196,14 +207,20 @@ Room.prototype.isEmpty = function() {
 
 
 Room.prototype.toObject = function() {
+   
+   var mods = [];
+   for (var val in this.modules) {
+      mods[mods.length] = this.modules[val];
+   }
+   
    return {owner: this.owner,
            baseGame: this.baseGame,
-           modules: this.modules,
+           modules: mods,
            id: this.id,
+           title: this.title,
+           numAI: this.targetPlayers - this.numHumans,
            numHumans: this.numHumans,
            inQueue: this.numConnectedPlayers,
-           title: this.title,
-           autofill: this.autofill,
            targetPlayers: this.targetPlayers
           };
 };

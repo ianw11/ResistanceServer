@@ -76,8 +76,17 @@
                </form>
             </div>
             <br>
+            <table border='1'>
+               <tr>
+                  <td>
+                     <h3 id='room_creation_summary'>
+                     </h3>
+                  </td>
+               </tr>
+            </table>
+            <br>
             <form id='paramForm'>
-               <table border='1'>
+               <table border='1' id='ai_allowed_table'>
                   <tr>
                      <td>
                         <h5>
@@ -109,6 +118,22 @@
                      </td>
                      <td>
                         <input type='radio' name='variation' value='2'>
+                     </td>
+                  </tr>
+               </table>
+               <table border='1' id='no_ai_table' class='_hidden'>
+                  <tr>
+                     <td>
+                        <h3>No AI In This Variation</h3>
+                     </td>
+                  </tr>
+                  <tr>
+                     <td>
+                        <h4>
+                           Number of Players:
+                           <input id='numberOfPeople_noAI' type='number' value='2'></input>
+                           <span class='error' id='numberOfPeopleNoAIError'></span>
+                        </h4>
                      </td>
                   </tr>
                </table>

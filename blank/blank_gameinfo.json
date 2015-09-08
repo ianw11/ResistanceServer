@@ -1,0 +1,17 @@
+{
+   "name": "Blank",
+   "global": {
+      "num_players": {
+         "max": "100",
+         "min": "1"
+      },
+      "allows_ai": "false",
+      "client" : "blank.html",
+      "clients": {
+         "blank.js": "blank/blank.js",
+         "blank.html": "blank/blank.html"
+      },
+      "server": "blank/blank_server.js"
+   },
+   "modules": []
+}

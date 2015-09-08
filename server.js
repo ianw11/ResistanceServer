@@ -1,4 +1,6 @@
 var Room = require('./Room');
+var Games = require('./Games.json');
+var GameInfo = require('./GameInfo');
 
 /* Here are the 'node' require statements */
 // Express initializes app to be a function handler
@@ -25,6 +27,12 @@ var room_id = 0;
 var rooms = {};
 
 
+var games = {};
+var game_names = [];
+
+// Delimiter to help properly form filenames
+var re = null;
+
 
 /* Begin definition of socket code */
 
@@ -34,31 +42,43 @@ io.on('connection', function(socket) {
    socket.ai = false;
    
    /* The first thing the client does is ask the user what their name is */
-   socket.on('name', function(name) {
+   socket.on('_name', function(name) {
       socket.name = name;
    });
    
    
    /** Create room */
    
+   socket.on('_get_game_names', function() {
+      socket.emit('_game_names', game_names);
+   });
+   
+   socket.on('_get_game_info', function(game_name) {
+      socket.emit('_game_info', games[game_name].toObject());
+   });
+   
+   socket.on('_get_module_info', function(game_name, mod_val) {
+      socket.emit('_module_info', games[game_name].getModuleInfo(mod_val));
+   });
+   
    /* When the client wants to create a game, they open a room for others to join */
-   socket.on('open_room', function(game_obj) {
-      var roomId = room_id++;
+   socket.on('_open_room', function(game_obj) {
       
-      var room = new Room(roomId, socket.name, game_obj);
+      var roomId = room_id++;
+      var room = new Room(roomId, socket.name, game_obj, games[game_obj.baseGame], delim);
       rooms[roomId] = room;
       
       room.connect(socket);
       socket.room = room
       
-      socket.emit('in_room', room.toObject(), true);
+      socket.emit('_in_room', room.toObject(), true);
    });
    
    
    /** Join room */
    
    /* When the client wants to join a game, they need to see all the open rooms */
-   socket.on('get_open_rooms', function() {
+   socket.on('_get_open_rooms', function() {
       var rms = [];
       
       for (var key in rooms) {
@@ -67,11 +87,11 @@ io.on('connection', function(socket) {
          }
       }
       
-      socket.emit('open_rooms', rms);
+      socket.emit('_open_rooms', rms);
    });
    
    /* When a client finds a room they want to join */
-   socket.on('join_room', function(roomId) {
+   socket.on('_join_room', function(roomId) {
       var room = rooms[roomId];
       
       // If the room went empty or the owner started the game
@@ -94,14 +114,14 @@ io.on('connection', function(socket) {
       
       socket.room = room;
       
-      socket.emit('in_room', room.toObject(), false);
+      socket.emit('_in_room', room.toObject(), false);
    });
    
    
    /** Leave room */
    
    /* When a client leaves a room. Handles the owner leaving too */
-   socket.on('leaving_room', function() {
+   socket.on('_leaving_room', function() {
       socket.room.disconnect(socket);
       
       verifyRoom(socket.room);
@@ -113,7 +133,7 @@ io.on('connection', function(socket) {
    /** Start room */
    
    /* When the game owner wants to start the game */
-   socket.on('ready_to_start', function(room_id) {
+   socket.on('_ready_to_start', function(room_id) {
       var room = rooms[room_id];
       room.verifyAndLaunch();
    });
@@ -165,55 +185,53 @@ function verifyRoom(room) {
 
 
 
+function populateGames() {
+   
+   var server_os = this.process.env.OS;
+   delim = '/';
+   if (server_os.toString().indexOf("Win") > -1) {
+      delim = '\\';
+   }
+   var re = new RegExp('/', 'g');
+      
+   
+   game_names[0] = '';
+   
+   Games.games.forEach(function(game_file) {
+      var info = new GameInfo(game_file);
+      
+      // Save the game
+      game_names[game_names.length] = info.getGameName();
+      games[info.getGameName()] = info;
+      
+      // Open the server to each client file
+      var client = info.getClientCode();
+      for (var key in client) {
+         var file = client[key];
+         file = file.replace(re, delim);
+         
+         route_obj['/'+key] = file;
+      }
+   });
+};
+
+
+
 
 /** Actually start the server */
 
-// We define a route handler '/' that gets called when we hit the website home
-app.get('/', function(req, res) {
-   res.sendFile(__dirname + '/index.html');
-});
-app.get('/index.js', function(req, res) {
-   res.sendFile(__dirname + '/index.js');
-});
+var route_obj = {
+   '/': 'index.html',
+   '/index.js': 'index.js'
+};
 
-// Sends the client the latest and greatest list of games to play
-app.get('/Games.json', function(req, res) {
-   res.sendFile(__dirname + '/Games.json');
+app.get('*', function(req, res) {
+   var file = route_obj[req._parsedUrl.pathname]
+   res.sendFile(file, {root: __dirname});
 });
-
-app.get('/resistance.html', function(req, res) {
-   res.sendFile(__dirname + '/resistance.html');
-});
-app.get('/resistance.js', function(req, res) {
-   res.sendFile(__dirname + '/resistance.js');
-});
-app.get('/avalon.html', function(req, res) {
-   res.sendFile(__dirname + '/avalon.html');
-});
-app.get('/avalon.js', function(req, res) {
-   res.sendFile(__dirname + '/avalon.js');
-});
-app.get('/blank.html', function(req, res) {
-   res.sendFile(__dirname + '/blank.html');
-});
-app.get('/blank.js', function(req, res) {
-   res.sendFile(__dirname + '/blank.js');
-});
-
-/* MultiSelect code */
-app.get('/multi_select', function (req, res) {
-   res.sendFile(__dirname + '/multi_select/css/multi-select.css');
-});
-app.get('/multi_select.js', function(req, res) {
-   res.sendFile(__dirname + '/multi_select/js/jquery.multi-select.js');
-});
-app.get('/img/switch.png', function(req, res) {
-   res.sendFile(__dirname + '/multi_select/img/switch.png');
-});
-/* End of MultiSelect code */
-
 
 // Lastly we listen to port 3000
 http.listen(3000, function() {
+   populateGames();
    console.log('Server started -- Listening on *:3000');
 });

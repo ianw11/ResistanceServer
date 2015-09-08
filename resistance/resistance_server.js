@@ -1,31 +1,42 @@
-var _game = require('./resistance_game');
 var _ai = require('./resistance_ai');
+var _game = require('./resistance_game');
 
 var self = null;
 
 /* Constructor for the server code of the Resistance */
-var res_server = function(room) {
+var res_server = function(room, game_info) {
    // Quick fix for scoping issues
    self = this;
    
-   // Setting up variables for the game
    this.room = room;
-   this.game = new _game.Game();
+   
+   this.mods = game_info.getModuleArray();
+   for (var key in room.modules) {
+      this.mods[key] = true;
+   }
+   
+};
+
+res_server.prototype.start = function() {
+   
+   // Setting up variables for the game
+   this.game = new _game(this.mods);
    this.connected_ai = [];
    this.sockets = {};
    this.num = 0; // Number of sockets
+   this.modules = this.room.modules;
    
    // Spin up enough AI for the game
-   var num_ai = room.targetPlayers - room.numConnectedPlayers;
+   var num_ai = this.room.targetPlayers - this.room.numConnectedPlayers;
    while (num_ai > 0) {
       var ndx = this.connected_ai.length;
-      this.connected_ai[ndx] = new _ai.AI(ndx, this.game, room.id);
+      this.connected_ai[ndx] = new _ai.AI(ndx, this.game, this.room.id);
       --num_ai;
    }
    
    // Add each socket to the game
-   for (var key in room.connectedPlayers) {
-      var socket = room.connectedPlayers[key];
+   for (var key in this.room.connectedPlayers) {
+      var socket = this.room.connectedPlayers[key];
       
       this.game.addUser(socket.name);
       this.sockets[socket.name] = socket;
@@ -126,9 +137,43 @@ res_server.prototype.applyNewSocket = function(socket) {
    });
    
    
+   // Share rules of the game
+   socket.on('module_rules', function() {
+      var text = "";
+      
+      for (var key in self.modules) {
+         if (key === 'ASS')
+            text += "The Commander knows the Spies, but the Resistance only wins if the Commander remains undiscovered\nReplace one Resistance and one Spy character card with the Commander and Assassin character cards\n3 Spy wins -> Spies win as usual\n3 Resistance wins -> The Spies have one opportunity to name the Commander.  After discussion, the Assassin names one Resistance player as the Commander.  If it's the commander, the Spies win. Otherwise the Resistance wins";
+         if (key === 'FAKE')
+            text += "FAKE GAME";
+         
+         text += '\n\n';
+      }
+      
+      socket.emit('module_rules', text);
+   });
+   
+   
+   /** ASS MODULE */
+   
+   if (self.mods['ASS']) {
+      socket.on('assassin_guess', function (name) {
+         if (self.game.assassinGuess(name)) {
+            finalVictory(0);
+         } else {
+            finalVictory(1);
+         }
+      });
+   }
+   
    // Once all players and AI are setup
    
    if (self.num === self.room.targetPlayers) {
+      var mods = [];
+      for (var key in self.modules) {
+         mods[mods.length] = self.modules[key];
+      }
+      emit('modules', mods);
       resetGame();
    }
    
@@ -150,6 +195,18 @@ function resetGame() {
          socket.emit('role', key, role);
       }
    };
+   
+   if (self.mods['ASS']) {
+      var assassin = self.game.getAssassin().name;
+      self.sockets[assassin].emit('assassin');
+      
+      var spies = [];
+      self.game.getSpies().forEach(function(player) {
+         spies[spies.length] = player.name
+      });
+      var commander = self.game.getCommander().name;
+      self.sockets[commander].emit('commander', spies);
+   }
    
    advanceRound();
 };
@@ -187,7 +244,24 @@ function newLeader() {
 };
 
 function victory(team) {
-   console.log('victory');
+   if (self.mods['ASS'] && team == 1) {
+      sendGameChat('--------------------------------');
+      sendGameChat('Assassin will now guess who the commander is');
+      
+      var resistance = [];
+      self.game.getResistance().forEach(function(player) {
+         resistance[resistance.length] = player.name;
+      });
+      
+      var name = self.game.getAssassin().name;
+      
+      self.sockets[name].emit('assassin_guess', resistance);
+   } else {
+      finalVictory(team);
+   }
+};
+
+function finalVictory(team) {   
    emit('victory', team);
    var users = self.game.getUsers();
    
@@ -197,6 +271,13 @@ function victory(team) {
    users.forEach(function(val) {
       userText += val.name + ' is ' + val.role + ' || ';
    });
+   
+   if (self.mods['ASS']) {
+      var commander = self.game.getCommander();
+      var assassin = self.game.getAssassin();
+      userText += commander.name + ' IS THE COMMANDER  ||  ';
+      userText += assassin.name + ' IS THE ASSASSIN';
+   }
    
    sendGameChat(userText);
 };
