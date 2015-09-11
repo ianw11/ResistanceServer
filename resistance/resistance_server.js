@@ -154,6 +154,10 @@ res_server.prototype.applyNewSocket = function(socket) {
    });
    
    
+   socket.on('reset_game', function() {
+      resetGame();
+   });
+   
    /** ASS MODULE */
    
    if (self.mods['ASS']) {
@@ -189,6 +193,7 @@ function resetGame() {
    
    sendGameChat('# of Resistance: ' + self.game.getNumResistance());
    sendGameChat('# of Spies: ' + self.game.getNumSpies());
+   console.log("About to loop over sockets");
    
    for (var key in self.sockets) {
       var socket = self.sockets[key];
@@ -201,10 +206,13 @@ function resetGame() {
       }
    };
    
+   console.log("Looped over sockets");
+   
    if (self.mods['ASS']) {
       // Tell the assassin who they are
       var assassin = self.game.getAssassin().name;
       self.sockets[assassin].emit('assassin');
+      console.log("Emitted to assassin");
       
       // Tell the commander who they are and share the list of spies
       var spies = [];
@@ -213,6 +221,7 @@ function resetGame() {
       });
       var commander = self.game.getCommander().name;
       self.sockets[commander].emit('commander', spies);
+      console.log("Emitted to commander");
    }
    
    advanceRound();
@@ -223,6 +232,8 @@ function advanceRound() {
       victory(game.getWinner());
       return;
    }
+   
+   console.log("In advanceRound()");
    
    newLeader();
    emit('updated_scores', self.game.getNumResistanceWins(), self.game.getNumSpyWins());
@@ -239,6 +250,8 @@ function advanceVote() {
 
 function newLeader() {
    var leader = self.game.getRoundLeader();
+   
+   console.log('In newLeader()');
    
    self.sockets[leader].emit('leader', self.game.getUsers(), self.game.getNumberOfAgents());
    emit('curr_leader', leader, self.game.getRoundNumber(), self.game.getVoteNumber());

@@ -49,7 +49,22 @@ var Game = function(mods) {
    
 
    this.newGame = function() {
-      isStarted = true;
+      
+      // Reset everything
+      var roundNumber = 0;
+      var numSpyWins = 0;
+      var numResistanceWins = 0;
+      var voteCount = 0;
+      var vote = false;
+      var voteYesCount = 0;
+      var playersVoted = 0;
+      var leader = -1;
+      var missionVoted = 0;
+      var missionPassed = true;
+      var numFailed = 0;
+      
+      
+      
       userList = shuffle(userList);
       
       /* ASS MODULE */

@@ -25,6 +25,8 @@ function start() {
    
    $('#rules_button')[0].onclick = rulesPopup;
    
+   $('#resetButton')[0].onclick = resetGame;
+   
    // Hide all divs that are not yet in use
    $('.r_hidden').each(function(index) {
       $(this).toggle(0);
@@ -37,21 +39,22 @@ function start() {
    /* When the server informs this client what role it is */
    socket.on('role', function(name, role, teammates) {
       self.name = name;
+      updateScoreBar();
       
       var h1 = $('#roleElem')[0];
       h1.innerHTML = 'You are: ' + role;
       self.role = role;
       
+      var mates = $('#teammates');
+      dropChildren(mates[0]);
       if (role === 'SPY') {
          thisTeammates = teammates;
-         var mates = $('#teammates');
          for (var i = 0; i < teammates.length; ++i) {
             var li = document.createElement('li');
             li.innerHTML = teammates[i].name;
             mates.append(li);
          }
       } else {
-         var mates = $('#teammates');
          var li = document.createElement('li');
          li.innerHTML = '???';
          mates.append(li);
@@ -160,8 +163,10 @@ function start() {
       setHeaderText(text);
       
       swapVisibility($('#emptyDiv'));
-      swapVisibility($('#scoreBar'));
-      swapVisibility($('#restartButton'));
+      
+      // Reset Button disabled until server issues can be figured out
+      // Random socket breakages occur from resetting the game
+      //$('#resetButton').toggle(0);
    });
 
    
@@ -184,11 +189,9 @@ function start() {
    });
    
    socket.on('assassin', function() {
-      $('#special_knowledge_tr').toggle(0);
       $('#special_knowledge')[0].innerHTML = 'You are the ASSASSIN';
    });
    socket.on('commander', function(spylist) {
-      $('#special_knowledge_tr').toggle(0);
       var text = 'You are the COMMANDER\nSpies: '
       spylist.forEach(function(name) {
          text += name + " ||  ";
@@ -220,11 +223,22 @@ function start() {
 };
 
 
+function resetGame() {
+   $('#resetButton').toggle(0);
+   swapVisibility($('#startDiv'));
+   setHeaderText('New Game');
+   
+   socket.emit('reset_game');
+};
+
+
 function swapVisibility(newElem) {
    visibleElem.toggle(0);
    newElem.toggle(0);
    visibleElem = newElem;
 };
+
+
 
 /* Functions for choosing a team to go on a mission */
 function voteTeam() {
@@ -308,4 +322,10 @@ function selectTeam() {
    socket.emit('team_list', selected);
    
    $('#leaderInfo').toggle(0);
+};
+
+// Helper function to drop all children of a parent
+function dropChildren(parent) {
+   while (parent.firstChild)
+      parent.removeChild(parent.firstChild);
 };

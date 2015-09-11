@@ -127,6 +127,13 @@ module.exports = {
       /** Here, the AI saves it's role and any teammates */
       this.socket.on('role', function(name, role, spies) {
          
+         // Reset data before anything else
+         self.role = "";
+         self.teammates = null;
+         self.playerWeights = {};
+         self.lastTeam = [];
+         self.lastCaptain = null;
+         
          self.role = role;
          
          // Get the player list to assign trust levels
@@ -268,8 +275,10 @@ module.exports = {
          }
        
 		   if (self.role === "SPY") {
-            if (game.getVoteNumber() === 4) {
-               // If the vote counter is at 4, spies WIN if the vote fails.
+            worthy = true;
+            
+            if (game.getVoteNumber() === 5) {
+               // If the vote counter is at 5, spies WIN if the vote fails.
                worthy = false;
             } else {
                var numSpies = numSpiesOnMission(team, self.teammates);
@@ -279,7 +288,7 @@ module.exports = {
                      worthy = false;
                   }
                }
-               worthy = true;
+               
             }
          }
          
@@ -329,7 +338,7 @@ module.exports = {
                   if (mate === mission)
                      numTeammatesOnMission++;
                });
-            });//numTeammatesOnMission is never used
+            });
             
             if (game.getNumSpyWins() === 2) {
                // First, if the spies already have 2 wins then auto-fail
@@ -339,18 +348,31 @@ module.exports = {
                worthy = false;
             } else {
                // Depending on the round number, different logic can apply
+               var rand;
                switch(game.getRoundNumber()) {
                   case 1:
                      if (game.getNumberOfAgents() > 2) {
-                        worthy = false;
+                        // Helps the AI outplay the resistance
+                        rand = Math.random();
+                        if (rand > (.15 * numTeammatesOnMission))
+                           worthy = false;
                      }
                      break;
-                  case 2: // Just something to give the games a little bit of randomness
-                     var rand = Math.random();
-                     if (rand > .2)
+                  case 2:
+                     // Just something to give the games a little bit of randomness
+                     rand = Math.random();
+                     if (rand > (.2 * numTeammatesOnMission))
                         worthy = false;
                      break;
                   case 3:
+                     // Another form of variance
+                     // Try to win if at 2 wins but keep the goal in mind
+                     // at 0 wins. 1 win is perfect to play around
+                     if (game.getNumSpyWins() === 1) {
+                        rand = Math.random();
+                        if (rand > .2)
+                           break;
+                     }
                   case 4:
                   case 5: // Always fail on Round 5
                      worthy = false;
