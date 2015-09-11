@@ -222,7 +222,8 @@ function populateGames() {
 
 var route_obj = {
    '/': 'index.html',
-   '/index.js': 'index.js'
+   '/index.js': 'index.js',
+   '/favicon.ico': 'favicon.ico'
 };
 
 app.get('*', function(req, res) {

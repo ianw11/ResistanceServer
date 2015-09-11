@@ -158,13 +158,18 @@ res_server.prototype.applyNewSocket = function(socket) {
    
    if (self.mods['ASS']) {
       socket.on('assassin_guess', function (name) {
+         sendGameChat('Assassin guessed ' + name + ' was the commander');
          if (self.game.assassinGuess(name)) {
+            sendGameChat('That is CORRECT');
             finalVictory(0);
          } else {
+            sendGameChat('That is INCORRECT - Actual commander: ' + self.game.getAssassin().name);
             finalVictory(1);
          }
       });
    }
+   
+   /** END OF ASS MODULE */
    
    // Once all players and AI are setup
    
@@ -197,9 +202,11 @@ function resetGame() {
    };
    
    if (self.mods['ASS']) {
+      // Tell the assassin who they are
       var assassin = self.game.getAssassin().name;
       self.sockets[assassin].emit('assassin');
       
+      // Tell the commander who they are and share the list of spies
       var spies = [];
       self.game.getSpies().forEach(function(player) {
          spies[spies.length] = player.name

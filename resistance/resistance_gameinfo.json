@@ -19,8 +19,7 @@
    "modules": [
       {
          "name": "Assassin (HA)",
-         "val": "ASS",
-         "allows_ai": "false"
+         "val": "ASS"
       }
    ]
    

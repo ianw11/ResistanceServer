@@ -35,6 +35,11 @@ var PlayerWeight = function(name, autoTrust) {
       
    };
    
+   // If the person this represents is a known spy, shut off trust.
+   this.knownSpy = function() {
+      this.trust = 0;
+   };
+   
    this.updateLeaderTrust = function(didPass) {
       if (didPass) {
          
@@ -145,6 +150,25 @@ module.exports = {
          }
          
       });
+      
+      /** ASS MODULE
+         If this AI is the commander, update trust of spies to be 0 */
+      this.socket.on('commander', function(spies) {
+         
+         spies.forEach(function(spy) {
+            self.playerWeights[spy].knownSpy();
+         });
+         
+      });
+      
+      this.socket.on('assassin_guess', function(resistance) {
+         var num_choices = resistance.length;
+         var res_choice = Math.floor(Math.random() * (num_choices - 1));
+         
+         this.emit('assassin_guess', resistance[res_choice]);
+      });
+      
+      /** END OF ASS MODULE */
       
       
       /**
