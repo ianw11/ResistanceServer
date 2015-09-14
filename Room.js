@@ -18,6 +18,7 @@ var Room = function(id, owner, game_params, game_info, delimiter) {
    
    this.baseGame = game_params.baseGame;
    this.modules = game_params.modules;
+   this.variants = game_params.variants;
    
    this.title = (game_params.title === '' ? this.baseGame : game_params.title);
    

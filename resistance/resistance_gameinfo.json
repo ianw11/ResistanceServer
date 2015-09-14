@@ -19,7 +19,20 @@
    "modules": [
       {
          "name": "Assassin (HA)",
-         "val": "ASS"
+         "val": "ASS",
+         "description": "Base form of Assassin variant",
+         "variants": [
+            {
+               "name": "Body Guard",
+               "val": "ASS-BG",
+               "description": "Body Guard knows Commander.  Resistance wins more"
+            },
+            {
+               "name": "Deep Cover",
+               "val": "ASS-DC",
+               "description": "Commander doesn't know Deep Cover (spy). Spies win more"
+            }
+         ]
       }
    ]
    

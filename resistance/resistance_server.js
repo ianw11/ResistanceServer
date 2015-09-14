@@ -1,6 +1,8 @@
 var _ai = require('./resistance_ai');
 var _game = require('./resistance_game');
 
+var _ = require('./underscore-min');
+
 var self = null;
 
 /* Constructor for the server code of the Resistance */
@@ -11,8 +13,14 @@ var res_server = function(room, game_info) {
    this.room = room;
    
    this.mods = game_info.getModuleArray();
+   this.variants = {};
    for (var key in room.modules) {
       this.mods[key] = true;
+      this.variants[key] = [];
+   }
+   
+   for (var key in room.variants) {
+      this.variants[key] = room.variants[key];
    }
    
 };
@@ -20,7 +28,7 @@ var res_server = function(room, game_info) {
 res_server.prototype.start = function() {
    
    // Setting up variables for the game
-   this.game = new _game(this.mods);
+   this.game = new _game(this.mods, this.variants);
    this.connected_ai = [];
    this.sockets = {};
    this.num = 0; // Number of sockets
@@ -142,10 +150,20 @@ res_server.prototype.applyNewSocket = function(socket) {
       var text = "";
       
       for (var key in self.modules) {
-         if (key === 'ASS')
+         if (key === 'ASS') {
             text += "The Commander knows the Spies, but the Resistance only wins if the Commander remains undiscovered\nReplace one Resistance and one Spy character card with the Commander and Assassin character cards\n3 Spy wins -> Spies win as usual\n3 Resistance wins -> The Spies have one opportunity to name the Commander.  After discussion, the Assassin names one Resistance player as the Commander.  If it's the commander, the Spies win. Otherwise the Resistance wins";
+            
+            self.variants['ASS'].forEach(function (variant) {
+               if (variant === 'ASS-DC')
+                  text += "\n\nDEEP COVER\nThe Deep Cover's (spy role) identity is not revealed to the Commander";
+               if (variant === 'ASS-BG')
+                  text += "\n\nBODYGUARD\nThe Body Guard (resistance role) knows who the Commander is";
+            });
+         }
          if (key === 'FAKE')
             text += "FAKE GAME";
+         
+         
          
          text += '\n\n';
       }
@@ -167,7 +185,7 @@ res_server.prototype.applyNewSocket = function(socket) {
             sendGameChat('That is CORRECT');
             finalVictory(0);
          } else {
-            sendGameChat('That is INCORRECT - Actual commander: ' + self.game.getAssassin().name);
+            sendGameChat('That is INCORRECT - Actual commander: ' + self.game.getCommander().name);
             finalVictory(1);
          }
       });
@@ -193,7 +211,6 @@ function resetGame() {
    
    sendGameChat('# of Resistance: ' + self.game.getNumResistance());
    sendGameChat('# of Spies: ' + self.game.getNumSpies());
-   console.log("About to loop over sockets");
    
    for (var key in self.sockets) {
       var socket = self.sockets[key];
@@ -206,22 +223,27 @@ function resetGame() {
       }
    };
    
-   console.log("Looped over sockets");
-   
    if (self.mods['ASS']) {
       // Tell the assassin who they are
       var assassin = self.game.getAssassin().name;
       self.sockets[assassin].emit('assassin');
-      console.log("Emitted to assassin");
       
       // Tell the commander who they are and share the list of spies
       var spies = [];
       self.game.getSpies().forEach(function(player) {
-         spies[spies.length] = player.name
+         // But don't emit the deep cover (if there is one)
+         if (!player.isDeepCover())
+            spies[spies.length] = player.name
+         else
+            spies[spies.length] = 'DEEP COVER';
       });
       var commander = self.game.getCommander().name;
       self.sockets[commander].emit('commander', spies);
-      console.log("Emitted to commander");
+      
+      if (_.contains(self.variants['ASS'], 'ASS-BG') ) {
+         var bodyguard = self.game.getBodyguard();
+         self.sockets[bodyguard.name].emit('bodyguard', commander);
+      }
    }
    
    advanceRound();
@@ -232,8 +254,6 @@ function advanceRound() {
       victory(game.getWinner());
       return;
    }
-   
-   console.log("In advanceRound()");
    
    newLeader();
    emit('updated_scores', self.game.getNumResistanceWins(), self.game.getNumSpyWins());
@@ -250,8 +270,6 @@ function advanceVote() {
 
 function newLeader() {
    var leader = self.game.getRoundLeader();
-   
-   console.log('In newLeader()');
    
    self.sockets[leader].emit('leader', self.game.getUsers(), self.game.getNumberOfAgents());
    emit('curr_leader', leader, self.game.getRoundNumber(), self.game.getVoteNumber());
@@ -292,14 +310,31 @@ function finalVictory(team) {
       userText += val.name + ' is ' + val.role + ' || ';
    });
    
+   sendGameChat(userText);
+   
+   
    if (self.mods['ASS']) {
+      userText = "";
+      
       var commander = self.game.getCommander();
       var assassin = self.game.getAssassin();
       userText += commander.name + ' IS THE COMMANDER  ||  ';
       userText += assassin.name + ' IS THE ASSASSIN';
+      
+      if ( _.contains(self.variants['ASS'], 'ASS-DC') ) {
+         userText += ' || ';
+         userText += self.game.getDeepCover().name;
+         userText += ' is DEEP COVER';
+      }
+      if ( _.contains(self.variants['ASS'], 'ASS-BG') ) {
+         userText += ' || ';
+         userText += self.game.getBodyguard().name;
+         userText += ' is BODYGUARD';
+      }
+      
+      sendGameChat(userText);
    }
    
-   sendGameChat(userText);
 };
 
 function sendGameChat(msg) {

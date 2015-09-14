@@ -199,6 +199,10 @@ function start() {
       $('#special_knowledge')[0].innerHTML = text;
    });
    
+   socket.on('bodyguard', function(commander_name) {
+      $('#special_knowledge')[0].innerHTML = 'You are the bodyguard. Commander is: ' + commander_name;
+   });
+   
 
    socket.on('updated_scores', function(resistance, spies) {
       $('#scoreBar')[0].innerHTML = "Resistance: " + resistance + " Spies: " + spies;

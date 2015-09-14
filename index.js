@@ -108,6 +108,9 @@ var baseGameSelect = function(sel) {
    var moduleForm = $('#moduleForm')[0];
    dropChildren(moduleForm);
    
+   _selected_modules = [];
+   updateVariants();
+   
    var val = sel.value;
    if (val === '')
       return;
@@ -119,16 +122,18 @@ socket.on('_game_info', function(game) {
    // Save the game for later use
    _selected_game = game;
    
-   
    var moduleForm = $('#moduleForm')[0];
+   dropChildren(moduleForm);
    
    // Display all modules available to play
+   // modules is an object in the form <module_key : module_name>
    for (var ndx in _selected_game.modules) {
       
       var module = _selected_game.modules[ndx];
    
       var label = document.createElement('label');
-      label.innerHTML = '<input type=checkbox onclick="_updateModules(this)" value=' + ndx + '> ' + module;
+      //label.setAttribute('title', 'TEST TEST');
+      label.innerHTML = '<input type=checkbox onclick="_updateModules(this)" value=' + ndx + ' > ' + module + '</input>';
       moduleForm.appendChild(label);
       moduleForm.appendChild(document.createElement('br'));
       
@@ -147,6 +152,7 @@ var _updateModules = function(box) {
    } else {
       delete _selected_modules[box.value];
       updateParams();
+      updateVariants();
    }
 };
 socket.on('_module_info', function(module) {
@@ -154,6 +160,7 @@ socket.on('_module_info', function(module) {
    _selected_modules[module_val] = module;
    
    updateParams();
+   updateVariants();
 });
 
 // Helper function
@@ -203,6 +210,36 @@ function updateSummary() {
    
    var summary = $('#room_creation_summary')[0];
    summary.innerHTML = msg;
+};
+
+function updateVariants() {
+   var variantForm = $('#variantForm')[0];
+   dropChildren(variantForm);
+   
+   for (var key in _selected_modules) {
+      var module = _selected_modules[key];
+      if (module.variants !== undefined) {
+         
+         var container = document.createElement('div');
+         container.setAttribute('module', module.val);
+         
+         // Make a title
+         var title = document.createElement('h4');
+         title.innerHTML = module.name;
+         container.appendChild(title);
+         
+         module.variants.forEach(function(variant) {
+            
+            var variantOption = document.createElement('label');
+            variantOption.innerHTML = '<input type=checkbox value=' + variant.val + ' > ' + variant.name + '</input>';
+            container.appendChild(variantOption);
+            container.appendChild(document.createElement('br'));
+            
+         });
+         
+         variantForm.appendChild(container);
+      }
+   };
 };
 
 
@@ -283,11 +320,37 @@ var openGame = function() {
    }
    
    
+   var variantObj = {};
+   var variants = document.getElementById('variantForm');
+   var numDivs = variants.children.length;
+   for (var i = 0; i < numDivs; ++i) {
+      var currModule = variants.children[i];
+      var currModuleName = currModule.getAttribute('module');
+      
+      var variantArr = [];
+      
+      var numChildren = currModule.children.length
+      for (var childNdx = 0; childNdx < numChildren; ++childNdx) {
+         var child = currModule.children[childNdx];
+         
+         if (child.nodeName === 'LABEL') {
+            if (child.children[0].checked) {
+               variantArr[variantArr.length] = child.children[0].value;
+            }
+         }
+      }
+      
+      variantObj[currModuleName] = variantArr;
+      
+   }
+   
+   
    var obj = {baseGame: _selected_game_name,
               modules: modules,
               title: gameTitle,
               numHumans: numHumans,
-              targetPlayers: targetPlayers
+              targetPlayers: targetPlayers,
+              variants: variantObj
               };
    
    socket.emit('_open_room', obj);

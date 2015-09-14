@@ -70,12 +70,20 @@
             <h1>What base game would you like to play?</h1>
             <select id='baseGameSelect' onchange='baseGameSelect(this)'>
             </select>
+            <hr>
             <div id='expansions'>
                <h2>What modules would you like to add?</h2>
                <form id='moduleForm'>
                </form>
+               <hr>
+               <div id='variants'>
+                  <h3>What variants would you like to add?</h3>
+                  <form id='variantForm'>
+                  </form>
+               </div>
             </div>
             <br>
+            <hr>
             <table border='1'>
                <tr>
                   <td>
@@ -139,6 +147,7 @@
                </table>
                <span class='error' id='radioError'></span>
                <br>
+               <hr>
                (Optional) Title of Game
                <input id="gameTitle" type='text'/>
             </form>

@@ -163,7 +163,9 @@ module.exports = {
       this.socket.on('commander', function(spies) {
          
          spies.forEach(function(spy) {
-            self.playerWeights[spy].knownSpy();
+            if (spy !== 'DEEP COVER') {
+               self.playerWeights[spy].knownSpy();
+            }
          });
          
       });
@@ -173,6 +175,10 @@ module.exports = {
          var res_choice = Math.floor(Math.random() * (num_choices - 1));
          
          this.emit('assassin_guess', resistance[res_choice]);
+      });
+      
+      this.socket.on('bodyguard', function(name) {
+         self.playerWeights[name].autotrust = true;
       });
       
       /** END OF ASS MODULE */
@@ -374,6 +380,9 @@ module.exports = {
                            break;
                      }
                   case 4:
+                  
+                     
+                  
                   case 5: // Always fail on Round 5
                      worthy = false;
                   default:

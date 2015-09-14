@@ -11,7 +11,6 @@ before playing a game.  The data available is:
    them available via get requests)
       - Server file
       - Client files
-      - Any AI files
 
 The GameInfo object operates by ingesting a *_gameinfo.json file with all this
 information and then makes it more easily available to the server.
@@ -39,7 +38,8 @@ var GameInfo = function(filename) {
    var self = this;
    
    data.modules.forEach(function (module) {
-      self.modules[module.val] = init_module(self);
+      var expansion = init_module(self);
+      
       for (var key in module) {
          var val = module[key];
          
@@ -48,8 +48,13 @@ var GameInfo = function(filename) {
          if (key === 'allows_ai')
             val = (val === "true");
          
-         self.modules[module.val][key] = val;
+         
+         
+         expansion[key] = val;
       }
+      
+      self.modules[module.val] = expansion;
+      
    });
    
 };
@@ -64,6 +69,13 @@ function init_module(self) {
    
    return ret;
 };
+
+
+GameInfo.prototype.getGameName = function() {
+   return this.game_name;
+};
+
+/** Module getter methods */
 
 GameInfo.prototype.getModules = function() {
    var ret = {};
@@ -90,6 +102,8 @@ GameInfo.prototype.getModuleInfo = function(module_val) {
 };
 
 
+/** Number of player getter methods */
+
 GameInfo.prototype.getMaxPlayers = function() {
    return this.max_players;
 };
@@ -102,6 +116,8 @@ GameInfo.prototype.allowsAI = function() {
    return this.allows_ai;
 };
 
+
+/** Game file getter methods */
 
 GameInfo.prototype.getServerCode = function() {
    return this.server_file;
@@ -116,9 +132,7 @@ GameInfo.prototype.getClientUrl = function() {
 };
 
 
-GameInfo.prototype.getGameName = function() {
-   return this.game_name;
-};
+/** Extensive getter method */
 
 GameInfo.prototype.toObject = function() {
    return {

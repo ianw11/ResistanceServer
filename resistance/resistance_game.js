@@ -1,7 +1,11 @@
+var _ = require('./underscore-min');
+
 var Player = function(name) {
    this.name = name;
    this.commander = false;
    this.assassin = false;
+   this.deepcover = false;
+   this.bodyguard = false;
    
    this.setRole = function(role) {
       this.role = role;
@@ -19,9 +23,23 @@ var Player = function(name) {
    this.isAssassin = function() {
       return this.assassin;
    };
+   
+   this.isDeepCover = function() {
+      return this.deepcover;
+   };
+   this.setDeepCover = function() {
+      this.deepcover = true;
+   };
+   
+   this.setBodyguard = function() {
+      this.bodyguard = true;
+   };
+   this.isBodyguard = function() {
+      return this.bodyguard;
+   };
 }
 
-var Game = function(mods) {
+var Game = function(mods, variants) {
    
    /* userList is an array of ndx:<Player>
    where <Player> is a Player object containing all relevant info */
@@ -127,6 +145,18 @@ var Game = function(mods) {
       /* ASS MODULE */
       var commanderNdx = Math.floor(Math.random() * (userList.length - commanderBase)) + commanderBase;
       userList[commanderNdx].setCommander();
+      if (_.contains(variants['ASS'], 'ASS-BG')) {
+         var bodyguardNdx = Math.floor(Math.random() * (userList.length - commanderBase)) + commanderBase;
+         // Make sure the commander isn't also the bodyguard
+         while (bodyguardNdx === commanderNdx)
+            bodyguardNdx = Math.floor(Math.random() * (userList.length - commanderBase)) + commanderBase;
+         
+         userList[bodyguardNdx].setBodyguard();
+      }
+      if (_.contains(variants['ASS'], 'ASS-DC')) {
+         var deepCoverNdx = Math.floor(Math.random() * this.getNumSpies());
+         spies[deepCoverNdx].setDeepCover();
+      }
       
       // After assigning roles, reshuffle the users so it's not possible
       // to determine who is what role purely based on turn order
@@ -415,6 +445,7 @@ var Game = function(mods) {
    };
    
    
+   
    /** ASS MODULE */
    
    this.getCommander = function() {
@@ -443,6 +474,28 @@ var Game = function(mods) {
          if (user.name === name) {
             ret = user.isCommander();
          }
+      });
+      
+      return ret;
+   };
+   
+   this.getDeepCover = function() {
+      var ret = null;
+      
+      spies.forEach(function(player) {
+         if (player.isDeepCover())
+            ret = player;
+      });
+      
+      return ret;
+   };
+   
+   this.getBodyguard = function() {
+      var ret = null;
+      
+      userList.forEach(function(user) {
+         if (user.isBodyguard())
+            ret = user;
       });
       
       return ret;
