@@ -5,41 +5,76 @@ var Player = function(name) {
    this.name = name;
    
    this.unopenedPacks = [];
-   this.pendingPack = null;
+   this.pendingPacks = [];
    this.currentPack = null;
    this.picks = [];
    
    this.receivePack = function(pack) {
-      this.pendingPack = pack;
+      this.pendingPacks.push(pack);
+      return this.notify();
+   };
+   
+   this.numPending = function() {
+      return this.pendingPacks.length;
    };
    
    this.hasUnopenedPack = function() {
       return this.unopenedPacks.length > 0;
    };
    
-   this.getPack = function(cardname) {
-      if (!this.hasUnopenedPack()) {
-         return null;
+   this.notify = function() {
+      if (this.currentPack != null) {
+         return false;
       }
-      if (this.currentPack == null || this.currentPack.length == 0) {
-         this.currentPack = this.unopenedPacks.pop();
+      if (this.pendingPacks.length === 0) {
+         return false;
       }
       
+      this.currentPack = this.pendingPacks.shift();
+      return true;
+   };
+   
+   this.openPack = function() {
+      this.currentPack = this.unopenedPacks.shift();
+   };
+   
+   this.getCurrentPack = function(cardname) {
       return this.currentPack;
    };
    
    this.chooseCard = function(cardname) {
+      var arrNdx = -1;
       for (var ndx in this.currentPack) {
          var card = this.currentPack[ndx];
          if (card.name === cardname) {
-            console.log(this.name + " has picked " + card.name);
             this.picks.push(card);
+            arrNdx = ndx;
+            break;
          }
       }
+      if (arrNdx === -1) {
+         throw new Exception();
+      }
+      this.currentPack.splice(arrNdx, 1);
+      var pack = this.currentPack;
+      this.currentPack = null;
+      shuffleArray(pack);
+      return pack;
+   };
+   
+   this.getPicks = function() {
+      return this.picks;
    };
 };
 
-var Drafter = function(cube_file, oracle_file, playerList) {
+var Drafter = function(cube_file, oracle_file, playerList, chat_handle) {
+   
+   // 0 for left, 1 for right
+   this.draftDirection = -1;
+   
+   this.numCompleted = 0;
+   
+   this.chat_handle = chat_handle;
    
    this.players = [];
    for (var ndx in playerList) {
@@ -50,22 +85,102 @@ var Drafter = function(cube_file, oracle_file, playerList) {
    this.newDraft = function(callback) {
       var self = this;
       genPacks(cube_file, oracle_file, this.players.length, function(packs) {
+         // Pass out 3 packs to each player
          for (var ndx in self.players) {
             self.players[ndx].unopenedPacks.push(packs.pop());
             self.players[ndx].unopenedPacks.push(packs.pop());
             self.players[ndx].unopenedPacks.push(packs.pop());
          }
+         self.nextDraftRound();
          callback();
       });
    };
    
+   this.nextDraftRound = function() {
+      this.numCompleted = 0;
+      if (this.draftDirection !== 0) {
+         this.draftDirection = 0;
+      } else {
+         this.draftDirection = 1;
+      }
+      
+      if (noMorePacks(this.players)) {
+         return false;
+      }
+      
+      for (var ndx in this.players) {
+         this.players[ndx].openPack();
+      }
+      console.log("Complete with nextDraftRound");
+      
+      return true;
+   };
+   
    this.getPackFor = function(playerNdx) {
       var player = this.players[playerNdx];
-      return player.getPack();
+      var pack = player.getCurrentPack();
+      return pack;
+   };
+   
+   this.cardPicked = function(playerNdx, cardname) {
+      var ret = [];
+      
+      var player = this.players[playerNdx];
+      var numPending = player.numPending();
+      var old_pack = player.chooseCard(cardname);
+      
+      if (old_pack.length == 0) {
+         this.numCompleted++;
+         if (this.numCompleted == this.players.length) {
+            if (this.nextDraftRound()) {
+               for (var ndx in this.players) {
+                  ret.push(ndx);
+               }
+            } else {
+               return null;
+            }
+         }
+         
+         return ret;
+      }
+      
+      if (player.notify()) {
+         ret.push(playerNdx);
+      }
+      
+      var nextNdx = playerNdx + (this.draftDirection === 0 ? 1 : -1);
+      if (nextNdx < 0) {
+         nextNdx = this.players.length - 1;
+      }
+      if (nextNdx === this.players.length) {
+         nextNdx = 0;
+      }
+      
+      var nextPlayer = this.players[nextNdx];
+      if(nextPlayer.receivePack(old_pack)) {
+         ret.push(nextNdx);
+      }
+      this.chat_handle(player.name + "(" + numPending + ") passed to " + nextPlayer.name + "(" + nextPlayer.numPending() + ")");
+      
+      return ret;
+   };
+   
+   this.getPickedCardsFor = function(playerNdx) {
+      var player = this.players[playerNdx];
+      return player.getPicks();
    };
 };
 
 module.exports = Drafter;
+
+function noMorePacks(players) {
+   for (var ndx in players) {
+      if (players[ndx].hasUnopenedPack()) {
+         return false;
+      }
+   }
+   return true;
+};
 
 function genPacks(cube_file, oracle_file, numPlayers, callback) {
    console.log("Opening file");

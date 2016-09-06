@@ -68,20 +68,34 @@
       </div>
       
       <div class='cube_hidden' id='cardSelect'>
-         <ul id="cardlist"></ul>
-         
+         <button id='viewSelected'>View Selected Cards</button>
+         <p>
          <table id='cardtable' border='2'></table>
-         
-         <div id='oraclepopup' class='white_content'>
-            <h2 id='name'></h2>
-            <p id='oracletype'></p>
-            <p id='oracletext'></p>
-            <p id='oraclept'></p>
-            <button onclick='closeOracle()'>Close</button>
-         </div>
-         
-         <div id='fade' class='black_overlay'></div>
+         <h1 id='pleasewait' class='cube_hidden'>PLEASE WAIT FOR OTHER PLAYERS TO MAKE PICKS</h1>
       </div>
+      
+      <div id="selectedCards" class="cube_hidden">
+         <h2>SELECTED CARDS</h2>
+         <p>
+         <button id='viewpackbutton'>View Current Pack</button>
+         <button id='exportlistbutton' class='cube_hidden'><h1>Export to Cockatrice</h1></button>
+         <p>
+         <table id='selectedcardtable' border='2'></table>
+      </div>
+         
+      <div id='oraclepopup' class='white_content'>
+         <h2 id='name'></h2>
+         <p id='oracletype'></p>
+         <p id='oracletext'></p>
+         <p id='oraclept'></p>
+         <button onclick='closeOracle()'>Close</button>
+      </div>
+      
+      <div id='cardlistpopup' class='white_content'>
+         <p id='cardlistcontent'></p>
+      </div>
+      
+      <div id='fade' class='black_overlay'></div>
       
       
       

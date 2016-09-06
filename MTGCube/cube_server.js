@@ -32,7 +32,7 @@ cube_server.prototype.start = function() {
 };
 
 cube_server.prototype.closeAI = function() {
-   
+   // No-op
 };
 
 cube_server.prototype.applyNewSocket = function(socket) {
@@ -44,10 +44,27 @@ cube_server.prototype.applyNewSocket = function(socket) {
       resetDraft();
    });
    
+   socket.on('card_pick', function(cardname) {
+      var indicesChanged = self.drafter.cardPicked(self.names.indexOf(this.name), cardname);
+      if (indicesChanged == null) {
+         
+         emit('draft_done');
+         sendGameChat("Draft is now complete");
+         return;
+      }
+      indicesChanged.forEach(function(val, index) {
+         emitCurrentPack(val);
+      });
+   });
+   
+   socket.on('get_picks', function() {
+      socket.emit('current_picks', self.drafter.getPickedCardsFor(self.names.indexOf(this.name)));
+   });
+   
    if (self.numSockets === self.room.targetPlayers) {
       var cube_file = self.game_info.client_files.cube;
       var oracle_file = self.game_info.client_files.oracle;
-      self.drafter = new _drafter(cube_file, oracle_file, self.names);
+      self.drafter = new _drafter(cube_file, oracle_file, self.names, sendGameChat);
       
       emit('connected_players', self.names);
    }
@@ -66,9 +83,14 @@ function resetDraft() {
 
 function emitCurrentPacks() {
    for (var ndx in self.names) {
-      var socket = self.sockets[self.names[ndx]];
-      socket.emit('new_pack', self.drafter.getPackFor(ndx));
+      console.log("Emitting to socket " + ndx);
+      emitCurrentPack(ndx);
    }
+};
+
+function emitCurrentPack(playerNum) {
+   var socket = self.sockets[self.names[playerNum]];
+   socket.emit('new_pack', self.drafter.getPackFor(playerNum));
 };
 
 function emit(msg, param1) {
