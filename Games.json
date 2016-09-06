@@ -1,5 +1,6 @@
 {
    "games": [
-      "resistance/resistance_gameinfo.json"
+      "resistance/resistance_gameinfo.json",
+      "MTGCube/mtgcube_gameinfo.json"
    ]
 }

@@ -1,0 +1,98 @@
+<style>
+   .mycenter {margin: auto;}
+   
+   .black_overlay{
+      display: none;
+      position: fixed;
+      top: 0%;
+      left: 0%;
+      width: 100%;
+      height: 100%;
+      background-color: black;
+      z-index:1001;
+      -moz-opacity: 0.8;
+      opacity:.80;
+      filter: alpha(opacity=80);
+   }
+   
+   .white_content {
+      display: none;
+      position: fixed;
+      top: 25%;
+      left: 25%;
+      width: 50%;
+      height: 50%;
+      padding: 16px;
+      border: 16px solid orange;
+      background-color: white;
+      z-index:1002;
+      overflow: auto;
+   }
+   
+</style>
+
+<div>
+
+   <!-- HEADER -->
+   <div class='flex'>
+      <div class='header mycenter'>
+         <h1 id='status'>CUBE</h1>
+      </div>
+   </div>
+   
+   <div id='container'>
+      
+      <div id='startDiv'>
+         <table border='2'>
+            <tr>
+               <td>
+                  Setup
+               </td>
+               <td>
+                  Connected Players
+               </td>
+            </tr>
+            <tr>
+               <td>
+                  Num Packs:
+                  <input type="number" id='numPacks' value='3'>
+                  <br>
+                  <button id='startDraftButton'>Start</button>
+               </td>
+               <td>
+                  <ul id="connectedPlayerList">
+                  </ul>
+               </td>
+            </tr>
+         </table>
+      </div>
+      
+      <div class='cube_hidden' id='cardSelect'>
+         <ul id="cardlist"></ul>
+         
+         <table id='cardtable' border='2'></table>
+         
+         <div id='oraclepopup' class='white_content'>
+            <h2 id='name'></h2>
+            <p id='oracletype'></p>
+            <p id='oracletext'></p>
+            <p id='oraclept'></p>
+            <button onclick='closeOracle()'>Close</button>
+         </div>
+         
+         <div id='fade' class='black_overlay'></div>
+      </div>
+      
+      
+      
+   </div>
+
+</div>
+
+<script>
+(function() {
+   
+})();
+</script>
+
+<script type='text/javascript' src='./cube.js'></script>

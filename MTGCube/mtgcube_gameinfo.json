@@ -1,0 +1,19 @@
+{
+   "name":"MTG Cube Drafter",
+   "global": {
+      "num_players": {
+         "max": "8",
+         "min": "1"
+      },
+      "allows_ai": "false",
+      "client": "cube.html",
+      "clients": {
+         "cube.html": "MTGCube/cube.html",
+         "cube.js": "MTGCube/cube.js",
+         "cube": "MTGCube/myfirstcube.txt",
+         "oracle": "MTGCube/AllSets.json"
+      },
+      "server":"MTGCube/cube_server.js"
+   },
+   "modules": []
+}
