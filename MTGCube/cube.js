@@ -150,7 +150,7 @@ function exportList() {
    
    xmlhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {
-        var link = '<a href="'+xmlhttp.responseText+'">Download</a>';
+        var link = '<a href="'+xmlhttp.responseText+'" download="draft_deck.cod">Download</a>';
         document.getElementById('cardlistcontent').innerHTML = link;
      }
    };
