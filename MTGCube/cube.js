@@ -3,6 +3,8 @@ var visibleElem = null;
 
 var numPicked = 0;
 
+var lastReceivedPack = null;
+
 function start() {
    
    var isComplete = false;
@@ -12,7 +14,8 @@ function start() {
    $('#startDraftButton')[0].onclick = startDraft;
    $('#viewSelected')[0].onclick = viewSelected;
    $('#viewpackbutton')[0].onclick = viewPack;
-   //$('#exportlistbutton')[0].onclick = exportList;
+   $('#exportlistbutton')[0].onclick = exportList;
+   $('#closeexportpopupbutton')[0].onclick = closeExportPopup;
    
    // Hide all divs that are not yet in use
    $('.cube_hidden').each(function(index) {
@@ -61,10 +64,7 @@ function start() {
    });
    
    socket.on("current_picks", function(arr) {
-      if (isComplete) {
-         exportList(arr);
-         return;
-      }
+      lastReceivedPack = arr;
       dropChildren($('#selectedcardtable')[0])
       for (var i = 0; i < 5; ++i) {
          var tr = document.createElement('tr');
@@ -83,7 +83,6 @@ function start() {
          }
          $('#selectedcardtable').append(tr);
       }
-      
       swapVisibility($('#selectedCards'));
    });
    
@@ -134,24 +133,25 @@ function viewSelected() {
 
 function viewPack() {
    swapVisibility($('#cardSelect'));
-   document.getElementById('oraclepopup').style.display='block';
-   document.getElementById('fade').style.display='block';
 };
 
-function exportList(arr) {
+function exportList() {
+   var arr = lastReceivedPack;
+   
    var list = '<?xml version="1.0" encoding="UTF-8"?>\n<cockatrice_deck version="1">\n<deckname>Draft</deckname>\n<comments></comments>\n<zone name="main">\n';
    for (var ndx in arr) {
       var card = arr[ndx];
       list += '<card number="1" price="0" name="' + card.name + '"/>\n';
    }
-   list += '</zone>\n</cockatrice_deck>';
+   list += '</zone>\n</cockatrice_deck>\n';
    
    var xmlhttp = new XMLHttpRequest();
-   var url='http://localhost:8100/cubedraftexport';
+   var url='http://www.nectarsac.com/cubedraftexport';
    
    xmlhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {
-        document.getElementById('cardlistcontent').innerHTML = xmlhttp.responseText;
+        var link = '<a href="'+xmlhttp.responseText+'">Download</a>';
+        document.getElementById('cardlistcontent').innerHTML = link;
      }
    };
    
@@ -160,7 +160,11 @@ function exportList(arr) {
    
    document.getElementById('cardlistpopup').style.display='block';
    document.getElementById('fade').style.display='block';
-   
+};
+
+function closeExportPopup() {
+   document.getElementById('cardlistpopup').style.display='none';
+   document.getElementById('fade').style.display='none';
 };
 
 function sanitize(str) {
