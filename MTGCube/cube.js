@@ -146,7 +146,7 @@ function exportList() {
    list += '</zone>\n</cockatrice_deck>\n';
    
    var xmlhttp = new XMLHttpRequest();
-   var url='http://www.nectarsac.com/cubedraftexport';
+   var url='/cubedraftexport';
    
    xmlhttp.onreadystatechange = function() {
      if (this.readyState == 4 && this.status == 200) {

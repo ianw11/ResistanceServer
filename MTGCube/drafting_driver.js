@@ -218,6 +218,9 @@ function processOracle(oracle) {
          obj["code"] = key;
          obj["ndx"] = i;
          
+         if (card.multiverseid === undefined) {
+            continue;
+         }
          cardMap[cardName].push(obj);
       }
    }
