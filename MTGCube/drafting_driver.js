@@ -245,6 +245,7 @@ function createPacks(card_list, oracle_data, card_mapping, numPlayers) {
          card_name = card_name.split("/")[0].trim();
       }
       var sets = card_mapping[card_name];
+      // If this line fails, check AllSets.json for updates
       var targetSet = sets[sets.length - 1];
       
       var latestSet = targetSet.code;

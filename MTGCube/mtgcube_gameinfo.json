@@ -10,10 +10,11 @@
       "clients": {
          "cube.html": "MTGCube/cube.html",
          "cube.js": "MTGCube/cube.js",
-         "cube": "MTGCube/myfirstcube.txt",
+         "cube": "MTGCube/mtgo_vintage.txt",
          "oracle": "MTGCube/AllSets.json"
       },
       "server":"MTGCube/cube_server.js"
    },
    "modules": []
 }
+

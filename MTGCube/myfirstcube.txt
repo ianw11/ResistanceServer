@@ -1,88 +1,87 @@
-Ardent Recruit
+Champion of the Parish
 Doomed Traveler
 Elite Vanguard
 Gideon's Lawkeeper
 Soldier of the Pantheon
 Accorder Paladin
 Azorius Arrester
-Fencing Ace
+Daring Skyjek
 Hidden Dragonslayer
 Mistral Charger
+Nearheath Pilgrim
 Precinct Captain
 Wall of Omens
 Whitemane Lion
-Auramancer
+Attended Knight
 Banisher Priest
 Blade Splicer
+Brimaz, King of Oreskos
+Emancipation Angel
+Flickerwisp
 Mentor of the Meek
+Mirran Crusader
 Mirror Entity
 Silverblade Paladin
-Akroan Phalanx
 Glimmerpoint Stag
+Guardian of the Gateless
 Serra Angel
-Captain of the Watch
+Sun Titan
 Sunblast Angel
-Urbis Protector
 Angel of Serenity
-Eternal Dragon
-Dispeller's Capsule
+Porcelain Legionnaire
 Brave the Elements
-Swift Justice
+Path to Exile
+Swords to Plowshares
 Apostle's Blessing
 Humble
-Moment of Heroism
 Otherworldly Journey
 Raise the Alarm
-Show of Valor
-Divine Verdict
-Eyes in the Skies
-Smite the Monstrous
+Unexpectedly Absent
 Gather the Townsfolk
-Rout
-Ethereal Armor
+Lingering Souls
+Day of Judgment
+Terminus
 Honor of the Pure
 Intangible Virtue
 Pacifism
 Seal of Cleansing
 Arrest
-Griffin Guide
+Glorious Anthem
 Oblivion Ring
 Faith's Fetters
-Knightly Valor
 Cloudfin Raptor
 Delver of Secrets
 Skywatcher Adept
 Augur of Bolas
+Azure Mage
 Merfolk Looter
 Omenspeaker
-Tidebinder Mage
-Eldrazi Skyspawner
-Glacial Wall
-Merfolk Sovereign
-Stormscape Battlemage
+Illusory Angel
+Man-o'-War
+Sea Gate Oracle
 Trained Condor
 Treasure Mage
 Trinket Mage
+Wall of Frost
 Warden of Evos Isle
+Archaeomancer
 Clone
 Master Thief
-Merfolk Seastalkers
-Mist Raven
-Phantom Monster
-Steamcore Weird
 Water Servant
 Air Servant
 Mnemonic Wall
 Mulldrifter
-Isperia's Skywatch
-Jetting Glasskite
-Phyrexian Ingester
+Riftwing Cloudskate
 Etherium Sculptor
 Faerie Mechanist
+Master Transmuter
+Inkwell Leviathan
+Spell Pierce
 Anticipate
 Compelling Deterrence
 Counterspell
-Essence Scatter
+Daze
+Into the Roil
 Mana Leak
 Memory Lapse
 Negate
@@ -94,66 +93,68 @@ Opportunity
 Syncopate
 Ponder
 Preordain
-Silent Departure
+Serum Visions
+Compulsive Research
 Divination
 Sleep
 Claustrophobia
-Gravitational Shift
-Persuasion
-Festering Goblin
-Blightsoil Druid
+Control Magic
+Archetype of Imagination
+Guul Draz Assassin
 Blood Artist
-Corpse Hauler
+Drudge Skeletons
 Gatekeeper of Malakir
+Mesmeric Fiend
 Reassembling Skeleton
-Cemetery Reaper
+Bone Shredder
 Deadbridge Shaman
+Drana, Liberator of Malakir
 Nantuko Husk
 Ophiomancer
-Phylactery Lich
 Phyrexian Rager
+Royal Assassin
 Vampire Nighthawk
-Wakedancer
-Xathrid Necromancer
 Crypt Ghast
+Desecration Demon
 Disciple of Bolas
 Gravedigger
-Liliana's Reaver
-Liliana's Shade
 Nekrataal
 Skinrender
+Bloodgift Demon
 Gray Merchant of Asphodel
 Phyrexian Delver
-Sengir Vampire
 Shriekmaw
-Phyrexian Gargantua
-Skeletal Vampire
-Havoc Demon
+Grave Titan
+Sheoldred, Whispering One
 Vault Skirge
 Tragic Slip
-Altar's Reap
+Vendetta
 Doom Blade
+Terror
 Ultimate Price
-Murder
+Dismember
+Sudden Spoiling
 Duress
-Ghoulcaller's Chant
 Innocent Blood
-Night's Whisper
+Thoughtseize
+Hymn to Tourach
 Drown in Sorrow
 Read the Bones
+Toxic Deluge
 Mutilate
 Increasing Ambition
+Living Death
 Rise from the Grave
 Unburial Rites
-Corrupt
 Profane Command
 Dead Weight
-Quest for the Gravelord
+Animate Dead
 Stab Wound
-Mark of the Vampire
+Underworld Connections
 Firedrinker Satyr
 Goblin Bushwhacker
 Goblin Welder
+Kird Ape
 Mogg Fanatic
 Ash Zealot
 Borderland Marauder
@@ -162,69 +163,68 @@ Keldon Marauders
 Kiln Fiend
 Mogg War Marshal
 Stingscourger
+Young Pyromancer
 Chandra's Phoenix
-Dragon Egg
 Guttersnipe
+Kessig Wolf
 Pyreheart Wolf
 Splatter Thug
 Beetleback Chief
 Flametongue Kavu
 Hellrider
 Keldon Champion
+Mindclaw Shaman
 Zealous Conscripts
 Charmbreaker Devils
 Hoard-Smelter Dragon
-Spawn of Thraxes
-Moltensteel Dragon
+Inferno Titan
 Burst Lightning
 Lightning Bolt
-Titan's Strength
 Ancient Grudge
-Fire // Ice
 Incinerate
 Magma Jet
+Searing Blaze
 Brimstone Volley
+Geistblast
 Staggershock
-Chandra's Outrage
 Fireblast
 Faithless Looting
 Firebolt
+Forked Bolt
 Reckless Charge
 Arc Trail
 Mizzium Mortars
-Rough // Tumble
 Seismic Stomp
 Act of Treason
 Anger of the Gods
-Burn at the Stake
+Demonfire
 Devil's Play
-Curse of Stalked Prey
+Destructive Force
 Madcap Skills
-Volcanic Strength
-Undying Rage
+Vessel of Volatility
 Avacyn's Pilgrim
-Bond Beetle
 Elves of Deep Shadow
 Experiment One
 Joraga Treespeaker
 Llanowar Elves
 Taunting Elf
 Deadly Recluse
-Elvish Vanguard
-Elvish Visionary
-Mayor of Avabruck
-Nightshade Peddler
+Fauna Shaman
+Jade Mage
 Sakura-Tribe Elder
-Thornweald Archer
+Scavenging Ooze
+Strangleroot Geist
+Sylvan Caryatid
+Viridian Emissary
+Wall of Roots
 Elvish Archdruid
+Eternal Witness
 Gloomwidow
 Mwonvuli Beast Tracker
-Timberwatch Elf
 Yavimaya Elder
 Centaur Chieftain
-Ezuri's Brigade
-Lumberknot
-Lys Alana Huntmaster
+Elvish Piper
+Masked Admirers
 Mold Shambler
 Penumbra Spider
 Roaring Primadox
@@ -233,128 +233,128 @@ Acidic Slime
 Arbor Colossus
 Garruk's Packleader
 Sentinel Spider
+Thragtusk
 Brutalizer Exarch
 Deadwood Treefolk
 Hooting Mandrills
+Primeval Titan
 Terra Stomper
-Krosan Tusker
+Avenger of Zendikar
 Pelakka Wurm
+Woodfall Primus
 Mutagenic Growth
-Druid's Deliverance
 Sylvan Might
-Wild Hunger
-Life // Death
+Farseek
 Mulch
-Nature's Spiral
 Rampant Growth
 Cultivate
+Search for Tomorrow
 Overrun
-Roar of the Wurm
+Green Sun's Zenith
 Seal of Strength
-Blanchwood Armor
-Elephant Guide
 Archetype of Endurance
-Mistmeadow Witch
 New Prahv Guildmage
 Thunderclap Wyvern
 Azorius Charm
+Baleful Strix
 Dimir Charm
-Far // Away
-Perplex
 Deny Reality
-Rix Maadi Guildmage
+Rakdos Cackler
 Rakdos Charm
-Spontaneous Combustion
-Dreadbore
-Skarrg Guildmage
+Terminate
+Bloodbraid Elf
 Ghor-Clan Rampager
-Armed // Dangerous
-Gruul War Chant
-Vitu-Ghazi Guildmage
+Savage Twister
 Trostani's Summoner
+Eladamri's Call
 Selesnya Charm
-Call of the Conclave
-Vizkopa Guildmage
 Sin Collector
-Orzhov Charm
 Zealous Persecution
-Korozda Guildmage
-Golgari Charm
+Mortify
+Glissa, the Traitor
+Abrupt Decay
 Putrefy
-Murkfiend Liege
+Trygon Predator
 Simic Sky Swallower
 Simic Charm
-Urban Evolution
 Nivix Guildmage
 Izzet Charm
-Brutal Expulsion
+Keranos, God of Storms
 Figure of Destiny
-Sunhome Guildmage
-Nobilis of War
 Boros Charm
 Lightning Helix
-Copper Myr
-Gold Myr
-Iron Myr
-Leaden Myr
+Kozilek's Channeler
+Bane of Bala Ged
+Artisan of Kozilek
 Myr Retriever
 Perilous Myr
-Silver Myr
 Burnished Hart
 Junk Diver
 Palladium Myr
 Pilgrim's Eye
-Trespassing Souleater
-Frogmite
+Solemn Simulacrum
 Steel Hellkite
+Wurmcoil Engine
 Myr Battlesphere
 Everflowing Chalice
 Bonesplitter
-Ichor Wellspring
-Kitesail
-Mycosynth Wellspring
+Darksteel Axe
+Mana Vault
+Sol Ring
+Voltaic Key
+Azorius Signet
+Boros Signet
+Dimir Signet
+Golgari Signet
+Grim Monolith
+Gruul Signet
+Izzet Signet
+Mind Stone
+Orzhov Signet
+Rakdos Signet
 Ratchet Bomb
-Ring of Evos Isle
-Ring of Kalonia
-Ring of Thune
-Ring of Valkas
-Ring of Xathrid
+Selesnya Signet
 Shrine of Burning Rage
+Shrine of Loyal Legions
+Simic Signet
 Sphere of the Suns
 Swiftfoot Boots
-Azorius Keyrune
-Boros Keyrune
-Butcher's Cleaver
-Dimir Keyrune
-Fireshrieker
-Golgari Keyrune
-Gruul Keyrune
-Izzet Keyrune
-Orzhov Keyrune
-Rakdos Keyrune
-Selesnya Keyrune
-Simic Keyrune
+Basalt Monolith
+Darksteel Ingot
+Pristine Talisman
+Sword of Feast and Famine
 Whispersilk Cloak
-Rusted Relic
+Worn Powerstone
+Hedron Archive
+Icy Manipulator
 Trading Post
-Ur-Golem's Eye
-Bojuka Bog
+Azorius Chancery
+Boros Garrison
 Clifftop Retreat
 Desolate Lighthouse
+Dimir Aqueduct
 Dragonskull Summit
 Drowned Catacomb
 Evolving Wilds
 Glacial Fortress
-Grove of the Guardian
+Golgari Rot Farm
+Gruul Turf
 Hinterland Harbor
 Isolated Chapel
+Izzet Boilerworks
+Kessig Wolf Run
+Lumbering Falls
+Mishra's Factory
 Moorland Haunt
-Rogue's Passage
+Orzhov Basilica
+Rakdos Carnarium
 Rootbound Crag
+Selesnya Sanctuary
+Shambling Vent
+Simic Growth Chamber
 Stensia Bloodhall
+Stirring Wildwood
 Sulfur Falls
 Sunpetal Grove
 Terramorphic Expanse
-Warped Landscape
-Wirewood Lodge
 Woodland Cemetery
